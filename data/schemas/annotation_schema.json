@@ -1,0 +1,28 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ECFD Utterance Tactic Annotation Schema",
+  "type": "object",
+  "required": ["utteranceId", "text", "tactics"],
+  "properties": {
+    "utteranceId": { "type": "string" },
+    "text": { "type": "string" },
+    "tactics": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "IMPERSONATION",
+          "AUTHORITY",
+          "URGENCY",
+          "OTP_REQUEST",
+          "CREDENTIAL_REQUEST",
+          "PAYMENT_REQUEST",
+          "REMOTE_ACCESS",
+          "SECRECY",
+          "VERIFICATION_BYPASS",
+          "SENSITIVE_ACTION"
+        ]
+      }
+    }
+  }
+}

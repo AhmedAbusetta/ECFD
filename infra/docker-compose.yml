@@ -1,0 +1,88 @@
+version: '3.8'
+
+services:
+  # --- PostgreSQL Database ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecfd-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecfd_db
+      POSTGRES_USER: ecfd_app_user
+      POSTGRES_PASSWORD: dev_secret_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecfd_app_user -d ecfd_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- Asterisk PBX ---
+  asterisk:
+    image: andrius/asterisk:20-alpine
+    container_name: ecfd-asterisk
+    restart: unless-stopped
+    ports:
+      - "5060:5060/udp"
+      - "8088:8088"
+      - "10000-10100:10000-10100/udp"
+    volumes:
+      - ../telephony/asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro
+      - ../telephony/asterisk/extensions.conf:/etc/asterisk/extensions.conf:ro
+      - ../telephony/asterisk/ari.conf:/etc/asterisk/ari.conf:ro
+      - ../telephony/asterisk/http.conf:/etc/asterisk/http.conf:ro
+      - ../telephony/asterisk/rtp.conf:/etc/asterisk/rtp.conf:ro
+
+  # --- ASP.NET Core Backend ---
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ECFD.Api/Dockerfile
+    container_name: ecfd-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ecfd_db;Username=ecfd_app_user;Password=dev_secret_password;
+      - Asterisk__AriUrl=http://asterisk:8088/ari
+      - ML_USE_MOCK_MODE=false
+    ports:
+      - "5000:5000"
+
+  # --- ASR Microservice ---
+  asr:
+    build:
+      context: ../ml/asr
+      dockerfile: Dockerfile
+    container_name: ecfd-asr
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+
+  # --- NLP Microservice ---
+  nlp:
+    build:
+      context: ../ml/nlp
+      dockerfile: Dockerfile
+    container_name: ecfd-nlp
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+
+  # --- Voice Anti-Spoofing Microservice ---
+  antispoof:
+    build:
+      context: ../ml/antispoof
+      dockerfile: Dockerfile
+    container_name: ecfd-antispoof
+    restart: unless-stopped
+    ports:
+      - "8003:8003"
+
+volumes:
+  postgres_data:

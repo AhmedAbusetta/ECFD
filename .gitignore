@@ -1,0 +1,99 @@
+# ==========================================
+# ECFD Monorepo — Production .gitignore
+# ==========================================
+
+# --- Environment & Secrets ---
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+*.cert
+*.pfx
+
+# --- .NET & Visual Studio ---
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+.vscode/
+TestResults/
+*.resharper
+*.dotCover
+
+# --- Python & PyTorch ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# --- ML Weights & Large Checkpoints ---
+# (Store model manifests in git, store binary checkpoints externally / S3 / HuggingFace)
+*.pt
+*.pth
+*.bin
+*.onnx
+*.safetensors
+*.engine
+*.tflite
+models/checkpoints/
+
+# --- Node.js & React / Next.js ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next/
+out/
+.pnpm-debug.log*
+
+# --- Audio Files & Dataset Recordings ---
+# (Small sample clips for unit tests are allowed in data/samples/, raw audio ignored)
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.raw
+*.pcm
+data/raw_recordings/
+data/audio_dumps/
+
+# --- Database & Persistence Dumps ---
+*.sql.gz
+*.dump
+pgdata/
+postgres_data/
+
+# --- OS & IDE Specific ---
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Nn]otebooks/.ipynb_checkpoints

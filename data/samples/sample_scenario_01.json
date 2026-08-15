@@ -1,0 +1,43 @@
+{
+  "scenarioId": "SCN-OTP-001",
+  "attackType": "OTP_THEFT",
+  "language": "ar-EG/en",
+  "speakers": [
+    { "id": "SPK-01", "role": "CALLER" },
+    { "id": "SPK-02", "role": "EMPLOYEE" }
+  ],
+  "utterances": [
+    {
+      "speakerId": "SPK-01",
+      "text": "ألو مساء الخير، أنا أحمد من الدعم الفني للـ IT في الإدارة الرئيسية",
+      "startMs": 0,
+      "endMs": 3500,
+      "tactics": ["IMPERSONATION", "AUTHORITY"],
+      "expectedStage": "IdentityClaim"
+    },
+    {
+      "speakerId": "SPK-02",
+      "text": "أهلاً يا فندم، خير فيه مشكلة؟",
+      "startMs": 3800,
+      "endMs": 5500,
+      "tactics": [],
+      "expectedStage": "IdentityClaim"
+    },
+    {
+      "speakerId": "SPK-01",
+      "text": "احنا لاحظنا محاولة دخول مشبوهة على حسابك ولازم نحدث الأمان حالاً قبل ما يتقفل الحساب",
+      "startMs": 5800,
+      "endMs": 10200,
+      "tactics": ["AUTHORITY", "URGENCY"],
+      "expectedStage": "Pressure"
+    },
+    {
+      "speakerId": "SPK-01",
+      "text": "أنا بعتلك كود تأكيد على الموبايل في رسالة SMS، مليهوني بسرعة عشان نلغي الاختراق",
+      "startMs": 10500,
+      "endMs": 15000,
+      "tactics": ["OTP_REQUEST", "URGENCY", "SENSITIVE_ACTION"],
+      "expectedStage": "CredentialExtraction"
+    }
+  ]
+}

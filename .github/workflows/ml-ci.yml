@@ -1,0 +1,47 @@
+name: ML Microservices CI (Python)
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'ml/**'
+      - '.github/workflows/ml-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'ml/**'
+      - '.github/workflows/ml-ci.yml'
+
+jobs:
+  lint-and-contract-check:
+    name: Lint & Verify ML API Schemas
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        service: [asr, nlp, antispoof]
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Linting Tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8 black fastapi uvicorn pydantic requests
+
+      - name: Syntax & Formatting Check (${{ matrix.service }})
+        run: |
+          # Stop build if there are Python syntax errors or undefined names
+          flake8 ml/${{ matrix.service }} --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all other formatting warnings as non-fatal
+          flake8 ml/${{ matrix.service }} --count --exit-zero --max-complexity=10 --max-line-length=120 --statistics
+
+      - name: Verify FastAPI App Initialization
+        run: |
+          python -c "import sys; sys.path.append('ml/${{ matrix.service }}'); import app; print('Service ${{ matrix.service }} schema imported successfully')"

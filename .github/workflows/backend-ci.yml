@@ -1,0 +1,36 @@
+name: Backend CI (.NET 8)
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-test:
+    name: Build .NET Solution & Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 8 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore Dependencies
+        run: dotnet restore backend/ECFD.sln
+
+      - name: Build Solution
+        run: dotnet build backend/ECFD.sln --configuration Release --no-restore
+
+      - name: Run Unit & Engine Tests
+        run: dotnet test backend/ECFD.sln --configuration Release --no-build --verbosity normal
