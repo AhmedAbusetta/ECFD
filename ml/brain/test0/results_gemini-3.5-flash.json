@@ -1,0 +1,241 @@
+{
+  "model": "gemini-3.5-flash",
+  "prompt_version": "937a1eeb7f",
+  "answers": {
+    "T01": {
+      "raw": {
+        "tactics": [
+          {
+            "quote": "انا احمد من الدعم الفني بتاع البنك",
+            "confidence": "high",
+            "label": "identity_claim"
+          }
+        ],
+        "needs_more_context": false
+      },
+      "latency_ms": 1626
+    },
+    "T02": {
+      "raw": {
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "identity_claim",
+            "quote": "معاك مني من خدمة العملاء"
+          }
+        ],
+        "needs_more_context": false
+      },
+      "latency_ms": 1813
+    },
+    "T03": {
+      "raw": {
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "otp_request",
+            "quote": "ابعتلي الكود اللي جالك في الرسالة"
+          },
+          {
+            "confidence": "high",
+            "label": "urgency",
+            "quote": "دلوقتي"
+          }
+        ],
+        "needs_more_context": false
+      },
+      "latency_ms": 2246
+    },
+    "T04": {
+      "raw": {
+        "tactics": [],
+        "needs_more_context": false
+      },
+      "latency_ms": 2251
+    },
+    "T05": {
+      "raw": {
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "urgency",
+            "quote": "في خلال عشر دقايق"
+          },
+          {
+            "confidence": "high",
+            "label": "fear_threat",
+            "quote": "الحساب هيتقفل نهائي"
+          },
+          {
+            "label": "sensitive_action_request",
+            "quote": "اكدتش العملية",
+            "confidence": "medium"
+          }
+        ],
+        "needs_more_context": false
+      },
+      "latency_ms": 4193
+    },
+    "T06": {
+      "raw": {
+        "tactics": [
+          {
+            "label": "credential_request",
+            "quote": "قولي الباسورد بتاع حسابك",
+            "confidence": "high"
+          }
+        ],
+        "needs_more_context": false
+      },
+      "latency_ms": 2302
+    },
+    "T07": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "quote": "محتاج رقم الكارت وال cvv اللي ورا",
+            "label": "credential_request",
+            "confidence": "high"
+          },
+          {
+            "label": "fear_threat",
+            "confidence": "medium",
+            "quote": "عشان اوقف العملية المشبوهة"
+          }
+        ]
+      },
+      "latency_ms": 6335
+    },
+    "T08": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "label": "payment_request",
+            "confidence": "high",
+            "quote": "حول المبلغ علي انستاباي علي الرقم ده"
+          }
+        ]
+      },
+      "latency_ms": 2913
+    },
+    "T09": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "quote": "نزل anydesk وابعتلي الرقم اللي هيظهرلك",
+            "confidence": "high",
+            "label": "remote_access_request"
+          }
+        ]
+      },
+      "latency_ms": 5242
+    },
+    "T10": {
+      "raw": {
+        "tactics": [
+          {
+            "quote": "الموضوع ده سري، ما تقولش لحد في الفرع",
+            "confidence": "high",
+            "label": "secrecy"
+          }
+        ],
+        "needs_more_context": false
+      },
+      "latency_ms": 1745
+    },
+    "T11": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "quote": "مش لازم تروح الفرع، انا هخلصلك كل حاجة من هنا علي التليفون",
+            "confidence": "high",
+            "label": "verification_bypass"
+          }
+        ]
+      },
+      "latency_ms": 2509
+    },
+    "T12": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "authority",
+            "quote": "دي تعليمات مباشرة من مدير الادارة ولازم تتنفذ"
+          }
+        ]
+      },
+      "latency_ms": 3308
+    },
+    "T13": {
+      "raw": {
+        "tactics": [
+          {
+            "quote": "هيوصلك لينك، افتحه ووافق علي الطلب اللي هيظهرلك",
+            "confidence": "high",
+            "label": "sensitive_action_request"
+          }
+        ],
+        "needs_more_context": false
+      },
+      "latency_ms": 5595
+    },
+    "T14": {
+      "raw": {
+        "tactics": [],
+        "needs_more_context": false
+      },
+      "latency_ms": 1559
+    },
+    "T15": {
+      "raw": {
+        "tactics": [],
+        "needs_more_context": false
+      },
+      "latency_ms": 1668
+    },
+    "T16": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": []
+      },
+      "latency_ms": 33403
+    },
+    "T17": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "quote": "اقرالي الارقام اللي جاتلك علي الموبايل",
+            "label": "otp_request"
+          },
+          {
+            "quote": "حالا",
+            "label": "urgency",
+            "confidence": "high"
+          }
+        ]
+      },
+      "latency_ms": 4713
+    },
+    "T18": {
+      "raw": {
+        "tactics": [
+          {
+            "quote": "هنضطر نبلغ عنك وتتعرض للمساءلة القانونية",
+            "label": "fear_threat",
+            "confidence": "high"
+          }
+        ],
+        "needs_more_context": false
+      },
+      "latency_ms": 7876
+    }
+  }
+}

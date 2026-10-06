@@ -10,10 +10,19 @@ export interface TranscriptSegment {
   sessionId: string;
   segmentId: string;
   text: string;
+  speaker?: "CALLER" | "EMPLOYEE";
   confidence: number;
   isFinal: boolean;
   startMs: number;
   endMs: number;
+}
+
+/** Live (not yet final) text of the utterance being spoken; replaced by the final segment. */
+export interface TranscriptPartial {
+  sessionId: string;
+  utteranceId: string;
+  speaker: "CALLER" | "EMPLOYEE";
+  text: string;
 }
 
 export interface TacticEvidence {
@@ -44,4 +53,36 @@ export interface AlertEvent {
   title: string;
   description: string;
   createdAt: string;
+}
+
+export interface AnalystEvidence {
+  turn: number;
+  speaker: string;
+  label: string;
+  quote: string;
+}
+
+/** The AI call analyst's view of the whole call after one turn (ADR-0005). */
+export interface AnalystUpdate {
+  sessionId: string;
+  turn: number;
+  analyzed: boolean;
+  risk: number;
+  level: "NONE" | "WATCH" | "WARNING" | "ALERT";
+  llmRisk: number | null;
+  floor: number;
+  stage: string;
+  trend: string;
+  employeeState: string;
+  callerGoal: string;
+  strategy: string;
+  nextLikelyMove: string;
+  alertAr: string;
+  policyViolations: string[];
+  evidence: AnalystEvidence[];
+  hardSignals: string[];
+  reasons: string[];
+  model: string;
+  latencyMs: number;
+  error: string | null;
 }

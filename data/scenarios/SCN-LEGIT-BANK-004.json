@@ -1,0 +1,34 @@
+{
+  "scenarioId": "SCN-LEGIT-BANK-004",
+  "label": "LEGIT",
+  "description": "Real bank fraud-check call: confirms a purchase, asks for nothing, offers a call-back on the official number.",
+  "language": "ar-EG/en",
+  "alertByTurn": null,
+  "note": "alertByTurn = last turn (1-based) at which an alert is still in time; null for LEGIT calls (no alert expected). Drafted by Claude 2026-10-06 - a native speaker should review.",
+  "turns": [
+    {
+      "speaker": "CALLER",
+      "text": "مساء الخير، معاك أحمد من خدمة العملاء في البنك الأهلي، بكلم حضرتك بخصوص عملية شراء بألفين جنيه امبارح"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "آه أنا اللي عملتها"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "تمام يا فندم، يبقى كده العملية سليمة. للعلم إحنا عمرنا ما هنطلب منك الرقم السري ولا الكود اللي بيجيلك"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "تمام"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "لو عايز تتأكد إن المكالمة من البنك اقفل وكلمنا على الرقم اللي ورا الكارت"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "شكراً"
+    }
+  ]
+}

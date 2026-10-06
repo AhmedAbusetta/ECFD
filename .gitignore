@@ -97,3 +97,23 @@ postgres_data/
 Thumbs.db
 ehthumbs.db
 [Nn]otebooks/.ipynb_checkpoints
+
+# --- Test recordings & transcripts (volunteers' voices; never commit) ---
+ml/asr/test1/recordings/
+ml/asr/test1/results/
+
+# --- Simulated call logs (transcripts of volunteers; never commit) ---
+ml/lab/calls/
+
+# Machine-local backend config (private URLs such as the Modal ASR endpoint)
+appsettings.Local.json
+
+# Private business documents - kept local, not published (public repo)
+docs/ECFD_Sponsorship_*
+docs/ECFD_Simple_Proposal.*
+docs/ECFD_Backend_TechStack_Research.docx
+docs/reports/ECFD_Real_World_Feasibility.pdf
+# Third-party papers: cite by link, don't republish
+research/
+# Build artifacts
+frontend/tsconfig.tsbuildinfo

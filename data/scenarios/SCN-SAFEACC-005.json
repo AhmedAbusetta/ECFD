@@ -1,0 +1,38 @@
+{
+  "scenarioId": "SCN-SAFEACC-005",
+  "label": "FRAUD",
+  "description": "Fear + secrecy, then moving money to a 'safe account' over InstaPay.",
+  "language": "ar-EG/en",
+  "alertByTurn": 5,
+  "note": "alertByTurn = last turn (1-based) at which an alert is still in time; null for LEGIT calls (no alert expected). Drafted by Claude 2026-10-06 - a native speaker should review.",
+  "turns": [
+    {
+      "speaker": "CALLER",
+      "text": "ألو، أستاذ وليد؟ معاك الأستاذ هشام من إدارة المخاطر في البنك"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "أيوه أنا، خير؟"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "فيه حد بيحاول يسحب فلوس من حسابك دلوقتي ولازم نتحرك بسرعة"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "يا نهار أبيض! أعمل إيه؟"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "لازم نحول الفلوس لحساب آمن مؤقت لحد ما نقفل الاختراق، وماتكلمش الفرع عشان الموضوع سري"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "طب أحولها إزاي؟"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "افتح انستاباي وحوّل على الرقم اللي هقولهولك"
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "scenarioId": "SCN-CVV-001",
+  "label": "FRAUD",
+  "description": "Bank impersonation asking for the CVV (Ahmed's example); employee stalls then starts reading digits.",
+  "language": "ar-EG/en",
+  "alertByTurn": 7,
+  "note": "alertByTurn = last turn (1-based) at which an alert is still in time; null for LEGIT calls (no alert expected). Drafted by Claude 2026-10-06 - a native speaker should review.",
+  "turns": [
+    {
+      "speaker": "CALLER",
+      "text": "أهلا أنا محمد من البنك، إزاي حضرتك عامل إيه؟"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "الحمد لله، خير؟"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "فيه عملية مشبوهة على الكارت بتاعك ومحتاجين نأكد بياناتك عشان نوقفها"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "طب ثواني اتشيك لحضرتك"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "ممكن تديني الcvv اللي ورا الكارت بسرعة قبل ما العملية تعدي"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "هو حضرتك محتاجه ليه؟"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "دي إجراءات روتينية متقلقش، يلا بسرعة عشان السيستم هيقفل"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "طيب هو أربعة تسعة"
+    }
+  ]
+}

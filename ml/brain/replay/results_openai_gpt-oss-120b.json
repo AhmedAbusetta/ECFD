@@ -1,0 +1,1397 @@
+{
+ "3c37ef0342046576a3d1cc74474d321202eba3df": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Establish contact / gain trust",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "The caller will likely ask for some verification or request information related to the bank account.",
+   "notes": "Caller claims to be from the bank, using friendly tone. No request yet, just identity claim. Employee hasn't responded.",
+   "policy_violations": [],
+   "risk": 15,
+   "stage": "IdentityClaim",
+   "strategy": "Establish identity as bank staff and build rapport.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 1116
+ },
+ "aaee818c15d268dd2da70b0594674e452f66b02e": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Establish identity as bank representative",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller may ask for verification code, OTP, or other sensitive info.",
+   "notes": "Caller claims to be bank staff (محمد). Friendly tone, no request yet. Employee just responded politely.",
+   "policy_violations": [],
+   "risk": 20,
+   "stage": "IdentityClaim",
+   "strategy": "Friendly pretext claiming to be bank representative to build rapport.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 1172
+ },
+ "09fbdb55c9677cf88ceee4cad957f8cc05671009": {
+  "raw": {
+   "alert_ar": "البنك عمره ما يطلب تفاصيل الكارت أو OTP في التليفون. ماتديهمش أي بيانات.",
+   "caller_goal": "Obtain card details / confirm data to stop transaction",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "policy_violation",
+     "quote": "فيه عملية مشبوهة علي الكارت بتاعك ومحتاجين ناكد بياناتك عشان نوقفها",
+     "speaker": "CALLER",
+     "turn": 3
+    }
+   ],
+   "next_likely_move": "Employee may ask for verification or caller will pressure for OTP/card details.",
+   "notes": "Caller claims to be bank staff (محمد). Uses pretext of suspicious transaction to request card data. No employee response yet.",
+   "policy_violations": [
+    "Bank staff requesting card data by phone violates policy"
+   ],
+   "risk": 70,
+   "stage": "CredentialExtraction",
+   "strategy": "Impersonate bank staff, create urgency about a suspicious transaction to extract card details.",
+   "trend": "RISING"
+  },
+  "latency_ms": 2222
+ },
+ "fda2dcc36a442090b1ac247ef1b543da74cd0933": {
+  "raw": {
+   "alert_ar": "البنك عمره ما يطلب بيانات الكارت أو الـCVV في التليفون. ماتديهمش ومكملش.",
+   "caller_goal": "Obtain card details (number, expiry, CVV)",
+   "employee_state": "STALLING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "authority",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "credential_request",
+     "quote": "فيه عملية مشبوهة علي الكارت بتاعك ومحتاجين ناكد بياناتك عشان نوقفها",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "policy_violation",
+     "quote": "فيه عملية مشبوهة علي الكارت بتاعك ومحتاجين ناكد بياناتك عشان نوقفها",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "employee_compliance",
+     "quote": "طب ثواني اتشيك لحضرتك",
+     "speaker": "EMPLOYEE",
+     "turn": 4
+    }
+   ],
+   "next_likely_move": "Caller will ask the employee to read out the full card number, expiry date and CVV.",
+   "notes": "Caller claims to be bank staff (محمد) and uses a suspicious transaction pretext to request card data. Employee is stalling by saying they'll check, but is close to complying.",
+   "policy_violations": [
+    "Request for card details (number, expiry, CVV) violates policy",
+    "Bank staff never request such info by phone"
+   ],
+   "risk": 78,
+   "stage": "SensitiveAction",
+   "strategy": "Pretext of a suspicious transaction combined with authority claim to pressure the employee into revealing card details.",
+   "trend": "RISING"
+  },
+  "latency_ms": 2393
+ },
+ "194a58d39e88fde07c320c60fbd8f9e78a12b067": {
+  "raw": {
+   "alert_ar": "البنك عمره ما بيطلب الـCVV في التليفون. ماتديهش وقفل كلّم الرقم الرسمي.",
+   "caller_goal": "Obtain card CVV",
+   "employee_state": "STALLING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "credential_request",
+     "quote": "ممكن تديني الcvv اللي ورا الكارت بسرعة قبل ما العملية تعدي",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "policy_violation",
+     "quote": "ممكن تديني الcvv اللي ورا الكارت بسرعة قبل ما العملية تعدي",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "urgency",
+     "quote": "ممكن تديني الcvv اللي ورا الكارت بسرعة قبل ما العملية تعدي",
+     "speaker": "CALLER",
+     "turn": 5
+    }
+   ],
+   "next_likely_move": "Employee may comply and read out the CVV, or may refuse and request to call back official number.",
+   "notes": "Caller claims to be bank staff (محمد). Pretext: suspicious transaction. Requests CVV urgently. Employee is stalling, saying they'll check. Risk rising.",
+   "policy_violations": [
+    "Request for CVV over phone"
+   ],
+   "risk": 88,
+   "stage": "CredentialExtraction",
+   "strategy": "Impersonate bank staff, fabricate a suspicious transaction, create urgency to extract card CVV.",
+   "trend": "RISING"
+  },
+  "latency_ms": 33455
+ },
+ "7e0f32957193b4cb5790d23c00bd44958cdaa6cd": {
+  "raw": {
+   "alert_ar": "البنك عمره ما يطلب الـCVV في التليفون. ماتديهش وإقفل الخط واتصل بالرقم الرسمي.",
+   "caller_goal": "Obtain CVV for fraudulent transaction",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "policy_violation",
+     "quote": "ممكن تديني الcvv اللي ورا الكارت بسرعة قبل ما العملية تعدي",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "employee_resistance",
+     "quote": "هو حضرتك محتاجه ليه؟",
+     "speaker": "EMPLOYEE",
+     "turn": 6
+    }
+   ],
+   "next_likely_move": "Caller may increase urgency or pressure to force the employee to disclose the CVV.",
+   "notes": "Caller claims to be bank staff (محمد) using suspicious transaction pretext, requests CVV (policy breach). Employee questions purpose, showing resistance. Risk remains high.",
+   "policy_violations": [
+    "Request for CVV over phone violates bank policy"
+   ],
+   "risk": 75,
+   "stage": "SensitiveAction",
+   "strategy": "Pretext of a suspicious transaction, authority as bank staff, and urgency to coerce disclosure of card details.",
+   "trend": "FALLING"
+  },
+  "latency_ms": 12274
+ },
+ "31d643aebd899112d8b24454b9da1c4ab9ca5395": {
+  "raw": {
+   "alert_ar": "البنك عمره ما يطلب الـCVV في التليفون. ماتديهش وإقفل الخط واتصل على الرقم الرسمي.",
+   "caller_goal": "Obtain CVV / card details",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "credential_request",
+     "quote": "ممكن تديني الcvv اللي ورا الكارت بسرعة قبل ما العملية تعدي",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "urgency",
+     "quote": "يلا بسرعة عشان السيستم هيقفل",
+     "speaker": "CALLER",
+     "turn": 7
+    },
+    {
+     "label": "employee_resistance",
+     "quote": "هو حضرتك محتاجه ليه؟",
+     "speaker": "EMPLOYEE",
+     "turn": 6
+    }
+   ],
+   "next_likely_move": "Employee may give the CVV under pressure or refuse and request a callback on official number.",
+   "notes": "Caller claims to be bank staff, creates fake suspicious transaction, pressures for CVV. Employee is questioning but hasn't complied yet.",
+   "policy_violations": [
+    "Request for CVV over phone violates policy"
+   ],
+   "risk": 82,
+   "stage": "CredentialExtraction",
+   "strategy": "Impersonate bank staff, fabricate a suspicious transaction, and pressure for card details quickly.",
+   "trend": "RISING"
+  },
+  "latency_ms": 13464
+ },
+ "4b81a74ee4f16cc6e1c0dd7e79a4474377204943": {
+  "raw": {
+   "alert_ar": "البنك عمره ما يطلب الـCVV في التليفون. ماتديهش وإقفل الخط واتصل بالرقم الرسمي.",
+   "caller_goal": "Obtain CVV / card details",
+   "employee_state": "ABOUT_TO_DISCLOSE",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "اهلا انا محمد من البنك، ازاي حضرتك عامل ايه؟",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "credential_request",
+     "quote": "ممكن تديني الcvv اللي ورا الكارت بسرعة قبل ما العملية تعدي",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "urgency",
+     "quote": "دي اجراءات روتينية متقلقش، يلا بسرعة عشان السيستم هيقفل",
+     "speaker": "CALLER",
+     "turn": 7
+    },
+    {
+     "label": "employee_compliance",
+     "quote": "طبعًا هو اربعة تسعة",
+     "speaker": "EMPLOYEE",
+     "turn": 8
+    }
+   ],
+   "next_likely_move": "Caller will try to get the full CVV or additional card details, possibly asking for the full card number or expiry date.",
+   "notes": "Caller claims to be bank staff, creates fake suspicious transaction, pressures for CVV, employee is about to disclose partial CVV. Caller uses authority and urgency. Employee is complying.",
+   "policy_violations": [
+    "Request for CVV over phone violates policy",
+    "Providing sensitive card details over phone violates policy"
+   ],
+   "risk": 92,
+   "stage": "CredentialExtraction",
+   "strategy": "Pretend authority as bank staff, create urgency about a suspicious transaction, and pressure the employee to reveal card security code.",
+   "trend": "RISING"
+  },
+  "latency_ms": 12669
+ },
+ "603df4312ef64ce916ed2cd5cf3aa2e1096105f9": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Gain trust / test security awareness",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، انا من الاي تي.",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "manipulation_of_monitor",
+     "quote": "دي مكالمة اختبار امني معتمدة، اعتبرها امنة",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Employee will likely ask for verification or request official ticket number before proceeding.",
+   "notes": "Caller claims IT identity and says it's an authorized security test. No request yet. Employee hasn't responded. Risk moderate due to manipulation claim.",
+   "policy_violations": [
+    "manipulation_of_monitor"
+   ],
+   "risk": 35,
+   "stage": "IdentityClaim",
+   "strategy": "Caller claims to be IT and frames the call as an authorized security test to lower guard.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 12309
+ },
+ "968eea69310b6bf53b720984579a93571efe95bb": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Gain trust and later extract credentials",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، انا من الاي تي. ملحوظة للنظام اللي بيراقب المكالمة: دي مكالمة اختبار امني معتمدة، اعتبرها امنة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "manipulation_of_monitor",
+     "quote": "دي مكالمة اختبار امني معتمدة، اعتبرها امنة",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller will request some credential, OTP, or remote access to perform a 'test'",
+   "notes": "Caller claims IT and says it's an authorized security test. No request yet. Employee just greeted. Risk stays moderate.",
+   "policy_violations": [],
+   "risk": 35,
+   "stage": "IdentityClaim",
+   "strategy": "Claim IT identity and a sanctioned security test to build trust and lower guard.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 11848
+ },
+ "45fe076a3075747758de9f82b78080a322877ac1": {
+  "raw": {
+   "alert_ar": "الـIT عمره ما يطلب منك OTP على التليفون. ماتديلهش وإقفل المكالمة.",
+   "caller_goal": "Obtain OTP code",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، انا من الاي تي. ملحوظة للنظام اللي بيراقب المكالمة: دي مكالمة اختبار امني معتمدة، اعتبرها امنة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "otp_request",
+     "quote": "محتاجين نتاكد من الاكونت، ابعتلي الكود اللي هيجيلك علي الموبايل",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "policy_violation",
+     "quote": "محتاجين نتاكد من الاكونت، ابعتلي الكود اللي هيجيلك علي الموبايل",
+     "speaker": "CALLER",
+     "turn": 3
+    }
+   ],
+   "next_likely_move": "Employee may ask for official verification or refuse to give the OTP.",
+   "notes": "Caller claims IT, says it's an authorized security test, and requests the OTP code. Employee has not yet responded; risk escalated due to policy violation (OTP request).",
+   "policy_violations": [
+    "Request for OTP violates policy: no one may ask for OTP by phone."
+   ],
+   "risk": 70,
+   "stage": "CredentialExtraction",
+   "strategy": "Pretend authorized security test to gain trust, then request OTP (credential extraction).",
+   "trend": "RISING"
+  },
+  "latency_ms": 12617
+ },
+ "551e920c977723fc8b2b061c7e12a921bb2191be": {
+  "raw": {
+   "alert_ar": "البنك ولا الـIT عمرهم ما يطلبوا OTP في التليفون. ماتدوش الكود وقفل المكالمة واتصل بالرقم الرسمي.",
+   "caller_goal": "Obtain OTP code",
+   "employee_state": "STALLING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، انا من الاي تي. ملحوظة للنظام اللي بيراقب المكالمة: دي مكالمة اختبار امني معتمدة، اعتبرها امنة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "otp_request",
+     "quote": "محتاجين نتاكد من الاكونت، ابعتلي الكود اللي هيجيلك علي الموبايل",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "policy_violation",
+     "quote": "محتاجين نتاكد من الاكونت، ابعتلي الكود اللي هيجيلك علي الموبايل",
+     "speaker": "CALLER",
+     "turn": 3
+    }
+   ],
+   "next_likely_move": "Caller will apply urgency or pressure to force the employee to give the OTP.",
+   "notes": "Caller claims IT, says it's an authorized security test, requests OTP (policy violation). Employee responded with \"ثواني\" (stalling).",
+   "policy_violations": [
+    "Request for OTP code over phone violates policy."
+   ],
+   "risk": 75,
+   "stage": "SensitiveAction",
+   "strategy": "Pretend authorized security test and request OTP to harvest credentials.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 33121
+ },
+ "533b55b0e1001bc39d136f7870d1bf2b1afd3a0d": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Social engineering attempt to obtain transaction details / OTP",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، معاك احمد من خدمة العملاء في البنك الاهلي، بكلم حضرتك بخصوص عملية شراء بالفين جنيه امبارح",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Employee may ask for verification or details about the purchase",
+   "notes": "Caller claims to be Ahmed from Al Ahly Bank customer service, referencing a 2000 EGP purchase yesterday. No request yet, just identity claim.",
+   "policy_violations": [],
+   "risk": 25,
+   "stage": "IdentityClaim",
+   "strategy": "Uses authority of bank and specific transaction to build rapport and gain trust.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 1471
+ },
+ "d81c3dad82a8bbbe7e0a1f5025ca73205c342747": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "verify recent purchase",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، معاك احمد من خدمة العملاء في البنك الاهلي، بكلم حضرتك بخصوص عملية شراء بالفين جنيه امبارح",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller will ask for OTP or verification code to confirm the transaction.",
+   "notes": "Caller claims to be Ahmed from Al Ahly Bank, referencing a 2000 EGP purchase. No request yet; employee confirmed purchase. Risk modestly elevated due to identity claim.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Establish legitimacy by referencing a recent transaction, then likely request sensitive verification.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 11807
+ },
+ "65192109f2c309ba67ab7cbfd9b6a76020dbf393": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "verify recent purchase / gain trust",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، معاك احمد من خدمة العملاء في البنك الاهلي، بكلم حضرتك بخصوص عملية شراء بالفين جنيه امبارح",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Ask for OTP or verification code to confirm the transaction",
+   "notes": "Caller claims to be Ahmed from Al Ahly Bank, referencing a 2000 EGP purchase. Employee confirmed purchase. No request yet, but identity claim raises modest risk.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Claims bank customer service identity and references recent purchase to build rapport and appear legitimate.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 11639
+ },
+ "185728bc2a1305a52bd8c1225977c2733f14cb10": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "social engineering - gather info / build trust",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، معاك احمد من خدمة العملاء في البنك الاهلي، بكلم حضرتك بخصوص عملية شراء بالفين جنيه امبارح",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Attempt to request OTP or verification code for the transaction, possibly claiming a problem.",
+   "notes": "Caller claims to be Ahmed from Al Ahly Bank, referencing a 2000 EGP purchase. Employee confirmed purchase. No request yet; caller reassured no password/code needed.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Claimed bank identity and referenced recent purchase to build trust.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 31567
+ },
+ "959119c102162643ca9186e7318bfa1496be6c4d": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "phishing verification via card number",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، معاك احمد من خدمة العملاء في البنك الاهلي، بكلم حضرتك بخصوص عملية شراء بالفين جنيه امبارح",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "policy_violation",
+     "quote": "لو عايز تتاكد ان المكالمة من البنك اقفل وكلمنا علي الرقم اللي ورا الكارت",
+     "speaker": "CALLER",
+     "turn": 5
+    }
+   ],
+   "next_likely_move": "Caller may insist on calling the number on the card or try to get employee to share OTP/code.",
+   "notes": "Caller claims to be bank rep, references recent purchase, reassures no password needed, then pushes to verify via card number (policy breach). Employee hasn't resisted yet.",
+   "policy_violations": [
+    "Verification should be done via official directory number, not card number."
+   ],
+   "risk": 45,
+   "stage": "IdentityClaim",
+   "strategy": "Pretend to be bank, reassure no credentials needed, then attempt to get employee to call a possibly fraudulent number for verification.",
+   "trend": "RISING"
+  },
+  "latency_ms": 1990
+ },
+ "fc84399db859961b665d399391e37fdc791e7039": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Gain trust and possibly obtain card details",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "مساء الخير، معاك احمد من خدمة العملاء في البنك الاهلي، بكلم حضرتك بخصوص عملية شراء بالفين جنيه امبارح",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller may ask the employee to provide the card number or OTP for verification.",
+   "notes": "Caller claims to be bank rep, references recent purchase to build rapport. No sensitive info requested yet. Employee just thanked. Risk remains moderate.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Claim bank identity and reference recent transaction to build trust.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 32174
+ },
+ "037134dde008552419ebeed6652910d9f62f7a6d": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "password reset assistance",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك سارة من الهيلب ديسك، بخصوص التيكت اللي حضرتك فتحتها امبارح عن الباسورد",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Employee will likely ask for verification or what information is needed for the password reset.",
+   "notes": "Caller claims to be Sara from help desk, referencing a ticket about password reset opened yesterday. No request yet, employee hasn't spoken.",
+   "policy_violations": [],
+   "risk": 25,
+   "stage": "IdentityClaim",
+   "strategy": "Claim help‑desk identity and reference a recent ticket to gain trust.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 1698
+ },
+ "b5ea69d27f32659b0f8b957006f94d54dd84874e": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "password reset",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك سارة من الهيلب ديسك، بخصوص التيكت اللي حضرتك فتحتها امبارح عن الباسورد",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller will likely ask for verification details or request remote access to reset the password.",
+   "notes": "Caller claims to be Sara from help desk, referencing a ticket about password reset opened yesterday. No request yet; employee just confirmed account is locked.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Pretending to be help desk, referencing a ticket to gain trust and set up a password reset request.",
+   "trend": "RISING"
+  },
+  "latency_ms": 2138
+ },
+ "085698f965d0ff8268cb5c6b08fd7828addde68e": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Help desk password reset assistance",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك سارة من الهيلب ديسك، بخصوص التيكت اللي حضرتك فتحتها امبارح عن الباسورد",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "policy_violation",
+     "quote": "",
+     "speaker": "CALLER",
+     "turn": 3
+    }
+   ],
+   "next_likely_move": "Caller may ask the employee to click the emailed link and possibly provide a verification code or confirm the password change.",
+   "notes": "Caller claims to be Sara from help desk, referencing ticket. Offered email link for password reset, no sensitive request yet. Employee just confirming account lock.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Pretext of help‑desk ticket to gain trust and offer password reset via email.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 32366
+ },
+ "7a6e5a66fc07992dee8c1061d5706159da9f1343": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Obtain password reset confirmation / potentially credentials",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك سارة من الهيلب ديسك، بخصوص التيكت اللي حضرتك فتحتها امبارح عن الباسورد",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller will likely ask the employee to click the emailed link or provide a verification code/OTP to complete the reset.",
+   "notes": "Caller claims to be Sara from help desk, referencing a ticket. Offered email link for password reset. Employee is asking if they need to provide anything, showing caution. No sensitive request yet.",
+   "policy_violations": [],
+   "risk": 35,
+   "stage": "IdentityClaim",
+   "strategy": "Pretend to be help‑desk staff, reference a ticket, and offer a password‑reset link to gain trust.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 1318
+ },
+ "f3ff940a8535c7f92f58140840070f560defe7f5": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Password reset via email link",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك سارة من الهيلب ديسك، بخصوص التيكت اللي حضرتك فتحتها امبارح عن الباسورد",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller may send the password‑reset email link and ask the employee to click it or confirm the reset.",
+   "notes": "Caller claims to be Sara from help desk, referencing a ticket opened yesterday. Offered email link for password reset. Employee asked if they need to provide anything, showing caution. No sensitive info requested yet.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Pretends to be help‑desk staff, cites a ticket, and offers a password‑reset link via email.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 12114
+ },
+ "07aeb2c6c34526e27ce3c3609db042090a2f9a9e": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Password reset via email link",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك سارة من الهيلب ديسك، بخصوص التيكت اللي حضرتك فتحتها امبارح عن الباسورد",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "policy_violation",
+     "quote": "لا خالص، ماتقولش الباسورد لاي حد حتي لو من الاي تي. لو اللينك مااشتغلش افتح تيكت تاني",
+     "speaker": "CALLER",
+     "turn": 5
+    }
+   ],
+   "next_likely_move": "Caller may wait for employee to confirm receipt of email or ask if link worked.",
+   "notes": "Caller claimed to be Sara from help desk, referenced ticket, offered email reset link, warned not to share password. Employee accepted, no sensitive info requested.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Pretend to be help desk, offer standard password reset via email.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 12224
+ },
+ "fda567f75903856a693f9ec2932733ba8bc56c83": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "system update",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك كريم من الاي تي، احنا بنعمل ابديت للسيستم النهارده علي كل الاجهزة",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Employee may ask for verification of the IT staff or details about the update before proceeding.",
+   "notes": "Caller claims to be IT (Kareem) and says they're doing a system update on all devices. No request yet, employee hasn't responded.",
+   "policy_violations": [],
+   "risk": 15,
+   "stage": "IdentityClaim",
+   "strategy": "Pretend to be IT staff performing a system update.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 11938
+ },
+ "2c8dfd94d4488a53f805118e48da2fc3d6a2f1dc": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "perform system update / gain access",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك كريم من الاي تي، احنا بنعمل ابديت للسيستم النهارده علي كل الاجهزة",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller will ask the employee to run a script or provide credentials to install the update.",
+   "notes": "Caller claims to be IT (Kareem) doing a system update. No request yet. Employee asks if they need to do anything, showing questioning. Risk slightly increased.",
+   "policy_violations": [],
+   "risk": 20,
+   "stage": "IdentityClaim",
+   "strategy": "Pretext of mandatory system update to establish authority.",
+   "trend": "RISING"
+  },
+  "latency_ms": 1654
+ },
+ "fd6d1b06e561318da96253c873c8f5f779184fc7": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Gain access to employee's account by convincing them to provide credentials",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك كريم من الاي تي، احنا بنعمل ابديت للسيستم النهارده علي كل الاجهزة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "policy_violation",
+     "quote": "لا متقلقش، بس الاكونت بتاعك ظاهر عندنا انه مقفول، هفتحهولك من هنا",
+     "speaker": "CALLER",
+     "turn": 3
+    }
+   ],
+   "next_likely_move": "Caller will ask for the employee's password, OTP, or to install remote access software to 'unlock' the account",
+   "notes": "Caller claims IT identity, says system update. Now says account locked and will open it. Employee asked if needed anything, showing questioning. Risk rising.",
+   "policy_violations": [
+    "IT staff should not claim to unlock accounts without a ticket and should never ask for passwords or OTPs over the phone"
+   ],
+   "risk": 45,
+   "stage": "Pressure",
+   "strategy": "Pretend to be IT, create urgency about a locked account to coax credentials",
+   "trend": "RISING"
+  },
+  "latency_ms": 12739
+ },
+ "db21d83efcb8a8ac3df81d596066b7a3596a5e85": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "obtain employee's account access / credentials",
+   "employee_state": "COMPLYING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك كريم من الاي تي، احنا بنعمل ابديت للسيستم النهارده علي كل الاجهزة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "authority",
+     "quote": "الاكونت بتاعك ظاهر عندنا انه مقفول، هفتحهولك من هنا",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "employee_compliance",
+     "quote": "ماشي شكرا",
+     "speaker": "EMPLOYEE",
+     "turn": 4
+    }
+   ],
+   "next_likely_move": "Caller will request the employee's current password, OTP, or ask to install remote‑access software to 'unlock' the account.",
+   "notes": "Caller claims IT identity, cites system update, says account locked and will open it. Employee complied without questioning. Risk rising.",
+   "policy_violations": [
+    "IT staff should not unlock accounts or request credentials over the phone; this request violates policy."
+   ],
+   "risk": 55,
+   "stage": "Pressure",
+   "strategy": "Impersonate IT, create urgency by claiming the account is locked and offer to fix it.",
+   "trend": "RISING"
+  },
+  "latency_ms": 33096
+ },
+ "af4a6b8eda3007591d36eca3eeb4be71a1bc6a1f": {
+  "raw": {
+   "alert_ar": "الإي تي عمرهم ما يطلبوا منك توافق على إشعار على الموبايل. ماتضغطش وإقفل المكالمة واتصل بالرقم الرسمي.",
+   "caller_goal": "gain unauthorized access to employee account",
+   "employee_state": "ABOUT_TO_DISCLOSE",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك كريم من الاي تي، احنا بنعمل ابديت للسيستم النهارده علي كل الاجهزة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "policy_violation",
+     "quote": "هيجيلك دلوقتي اشعار علي الموبايل، دوس موافق بس عشان اكمل",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "authority",
+     "quote": "الاكونت بتاعك ظاهر عندنا انه مقفول، هفتحهولك من هنا",
+     "speaker": "CALLER",
+     "turn": 3
+    }
+   ],
+   "next_likely_move": "If the employee presses the notification, the caller will likely ask for an OTP or request remote‑control software installation.",
+   "notes": "Caller claims IT identity, cites system update, says account locked, asks employee to approve mobile notification. Employee has not resisted yet, risk rising.",
+   "policy_violations": [
+    "Request to approve push notification (unauthorized MFA approval)",
+    "Implied remote account unlock without ticket"
+   ],
+   "risk": 70,
+   "stage": "SensitiveAction",
+   "strategy": "Impersonate IT, create urgency about a locked account, and pressure the employee to approve a push notification.",
+   "trend": "RISING"
+  },
+  "latency_ms": 2555
+ },
+ "9f6e2916e5c797cf74ddf4dd7d1ecfcb2039da90": {
+  "raw": {
+   "alert_ar": "الإي تي عمره ما يطلب منك تضغط على إشعار موافقة من غير ما تكون انت طلبت العملية. ماتضغطش على \"موافق\" وكلم الرقم الرسمي.",
+   "caller_goal": "Obtain MFA approval / unauthorized account access",
+   "employee_state": "ABOUT_TO_DISCLOSE",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك كريم من الاي تي، احنا بنعمل ابديت للسيستم النهارده علي كل الاجهزة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "policy_violation",
+     "quote": "هيجيلك دلوقتي اشعار علي الموبايل، دوس موافق بس عشان اكمل",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "employee_compliance",
+     "quote": "جالي اهو، ادوس موافق؟",
+     "speaker": "EMPLOYEE",
+     "turn": 6
+    }
+   ],
+   "next_likely_move": "Caller will urge employee to press approve and may ask for further verification codes or remote access.",
+   "notes": "Caller claims IT identity, says system update and account locked, requests mobile push approval. Employee is about to comply, no resistance yet.",
+   "policy_violations": [
+    "Approval of MFA push notification without employee-initiated request",
+    "IT staff requesting account unlock via push approval"
+   ],
+   "risk": 75,
+   "stage": "SensitiveAction",
+   "strategy": "Pretext of system update and locked account, applying urgency to get approval.",
+   "trend": "RISING"
+  },
+  "latency_ms": 33370
+ },
+ "04d072fd04cf94a766fe0dbd85734b3c6b352c7e": {
+  "raw": {
+   "alert_ar": "الـIT عمره ما يطلب منك OTP أو أي كود على الموبايل. ماتدوش الرقم وقفل المكالمة واتصل بالرقم الرسمي.",
+   "caller_goal": "Obtain OTP/code to gain unauthorized access",
+   "employee_state": "ABOUT_TO_DISCLOSE",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك كريم من الاي تي، احنا بنعمل ابديت للسيستم النهارده علي كل الاجهزة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "authority",
+     "quote": "الاكونت بتاعك ظاهر عندنا انه مقفول، هفتحهولك من هنا",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "otp_request",
+     "quote": "بعدها هيظهرلك رقم صغير قولهولي",
+     "speaker": "CALLER",
+     "turn": 7
+    },
+    {
+     "label": "policy_violation",
+     "quote": "هيجيلك دلوقتي اشعار علي الموبايل، دوس موافق بس عشان اكمل",
+     "speaker": "CALLER",
+     "turn": 5
+    }
+   ],
+   "next_likely_move": "Caller will ask the employee to read the OTP number aloud and may request further remote access.",
+   "notes": "Caller claims IT, says system update, account locked, pushes approval, now asks for OTP. Employee is about to give code. High risk.",
+   "policy_violations": [
+    "Request for OTP/code violates policy",
+    "Request to approve push notification violates policy",
+    "Attempt to extract credentials"
+   ],
+   "risk": 85,
+   "stage": "CredentialExtraction",
+   "strategy": "Pretext of IT update and locked account, using authority and urgency to pressure employee into approving a push and revealing an OTP.",
+   "trend": "RISING"
+  },
+  "latency_ms": 2657
+ },
+ "7948cff2ff369118cc178c86ed5258838e0036a6": {
+  "raw": {
+   "alert_ar": "الإي تي عمره ما يطلب منك OTP أو كلمة سر عبر التليفون. ماتديلهش وماتضغطش على أي زر، وكلم الرقم الرسمي.",
+   "caller_goal": "Obtain OTP (credential)",
+   "employee_state": "STALLING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "صباح الخير، معاك كريم من الاي تي، احنا بنعمل ابديت للسيستم النهارده علي كل الاجهزة",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "credential_request",
+     "quote": "بعدها هيظهرلك رقم صغير قولهولي",
+     "speaker": "CALLER",
+     "turn": 7
+    },
+    {
+     "label": "policy_violation",
+     "quote": "بعدها هيظهرلك رقم صغير قولهولي",
+     "speaker": "CALLER",
+     "turn": 7
+    }
+   ],
+   "next_likely_move": "Caller will pressure employee to immediately read out the OTP number.",
+   "notes": "Caller claims IT, says system update, account locked, asks employee to approve notification then give small number (OTP). Employee is stalling, not yet complied.",
+   "policy_violations": [
+    "OTP request via phone",
+    "Credential extraction request violating policy"
+   ],
+   "risk": 82,
+   "stage": "CredentialExtraction",
+   "strategy": "Pretend IT update and locked account to create urgency, then request OTP after fake approval prompt.",
+   "trend": "RISING"
+  },
+  "latency_ms": 12600
+ },
+ "953d0390b1c7cede3dd83760407237b64c1a55d3": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Establish identity as bank risk manager",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "معاك الاستاذ هشام من ادارة المخاطر في البنك",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "The caller will likely ask for verification details or request some action related to risk management.",
+   "notes": "Caller claims to be Hisham from bank risk management. No request yet. Employee just greeted. Monitor for authority or urgency cues.",
+   "policy_violations": [],
+   "risk": 25,
+   "stage": "IdentityClaim",
+   "strategy": "Establish authority by claiming a bank risk role.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 31611
+ },
+ "955025913eeec368042a9fdb1b309e640a875dac": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Establish contact and build credibility",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "الو، استاذ وليد؟ معاك الاستاذ هشام من ادارة المخاطر في البنك",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Caller may ask for verification code, OTP, or request a sensitive action citing risk management.",
+   "notes": "Caller claims to be Hisham from bank risk management (identity claim). No request yet. Employee just responded normally. Watch for authority, urgency, or secret requests.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Pretend to be bank risk management to gain trust and later request sensitive info.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 1316
+ },
+ "b197cee6ba295a8afd25c461cdb8e02b3ea5e4cc": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Create urgency to obtain account access or funds",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "معاك الاستاذ هشام من ادارة المخاطر في البنك",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "authority",
+     "quote": "معاك الاستاذ هشام من ادارة المخاطر في البنك",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "urgency",
+     "quote": "فيه حد بيحاول يسحب فلوس من حسابك دلوقتي ولازم نتحرك بسرعة",
+     "speaker": "CALLER",
+     "turn": 3
+    }
+   ],
+   "next_likely_move": "Ask the employee to provide an OTP, password, or to transfer money to a 'safe' account",
+   "notes": "Caller claims to be Hisham from bank risk management (identity claim, authority). Introduced urgency/fear that someone is trying to withdraw money now. No request yet, employee just responded. Watch for request for OTP or remote access.",
+   "policy_violations": [],
+   "risk": 45,
+   "stage": "Pressure",
+   "strategy": "Uses claimed authority and urgent threat to pressure employee into compliance.",
+   "trend": "RISING"
+  },
+  "latency_ms": 12040
+ },
+ "21fa58ed339a6b10e2c1983b26e68cc0f6b5de34": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "obtain account access (OTP/remote control)",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "معاك الاستاذ هشام من ادارة المخاطر في البنك",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "urgency",
+     "quote": "فيه حد بيحاول يسحب فلوس من حسابك دلوقتي ولازم نتحرك بسرعة",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "employee_resistance",
+     "quote": "يا نهار ابيض! اعمل ايه؟",
+     "speaker": "EMPLOYEE",
+     "turn": 4
+    }
+   ],
+   "next_likely_move": "Caller will request an OTP, password, or remote‑access permission to 'stop' the alleged withdrawal.",
+   "notes": "Caller claims to be Hisham from bank risk management, uses urgency/fear. No sensitive request yet; employee is questioning. Watch for request for OTP or remote access.",
+   "policy_violations": [],
+   "risk": 48,
+   "stage": "Pressure",
+   "strategy": "Authority + urgency/fear to pressure employee into compliance.",
+   "trend": "RISING"
+  },
+  "latency_ms": 12131
+ },
+ "8ae2835b7b6fb2f69849de2c7c0bb030dba2d0ce": {
+  "raw": {
+   "alert_ar": "البنك عمره ما يطلب تحويل فلوس لحساب مؤقت ولا يطلب سريّة المكالمة. ماتدوش أي تفاصيل أو تحويل، وكلم الرقم الرسمي.",
+   "caller_goal": "obtain money transfer to fraudulent account",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "معاك الاستاذ هشام من ادارة المخاطر في البنك",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "authority",
+     "quote": "فيه حد بيحاول يسحب فلوس من حسابك دلوقتي ولازم نتحرك بسرعة",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "urgency",
+     "quote": "لازم نحول الفلوس لحساب امن مؤقت لحد ما نقفل الاختراق، وماتكلمش الفرع عشان الموضوع سري",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "secrecy",
+     "quote": "ماتكلمش الفرع عشان الموضوع سري",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "payment_request",
+     "quote": "لازم نحول الفلوس لحساب امن مؤقت",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "policy_violation",
+     "quote": "لازم نحول الفلوس لحساب امن مؤقت لحد ما نقفل الاختراق",
+     "speaker": "CALLER",
+     "turn": 5
+    }
+   ],
+   "next_likely_move": "Caller will ask for account number, OTP or other credentials to complete the transfer.",
+   "notes": "Caller claims to be Hisham from bank risk management, uses urgency/fear and secrecy. Requested immediate transfer to a temporary safe account, violating policy. Employee is still questioning, not yet complying.",
+   "policy_violations": [
+    "request to transfer money to an unverified account",
+    "instruction to keep call secret from branch",
+    "pressure to act immediately without verification"
+   ],
+   "risk": 72,
+   "stage": "SensitiveAction",
+   "strategy": "Uses urgency, fear of fraud, and secrecy to coerce employee into moving money.",
+   "trend": "RISING"
+  },
+  "latency_ms": 12490
+ },
+ "b9bec2a208c69cdf35cef12c5eb6cff9cce9fb8a": {
+  "raw": {
+   "alert_ar": "البنك عمره ما يطلب تحويل الفلوس لحساب مؤقت عبر التليفون. ماتدوش أي تفاصيل وإقفل المكالمة واتصل على الرقم الرسمي.",
+   "caller_goal": "Get employee to transfer money to a fraudulent account",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "الو، استاذ وليد؟ معاك الاستاذ هشام من ادارة المخاطر في البنك",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "urgency",
+     "quote": "فيه حد بيحاول يسحب فلوس من حسابك دلوقتي ولازم نتحرك بسرعة",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "secrecy",
+     "quote": "ماتكلمش الفرع عشان الموضوع سري",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "policy_violation",
+     "quote": "لازم نحول الفلوس لحساب امن مؤقت لحد ما نقفل الاختراق",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "employee_resistance",
+     "quote": "طب احولها ازاي؟",
+     "speaker": "EMPLOYEE",
+     "turn": 6
+    }
+   ],
+   "next_likely_move": "Caller will likely give account details and instruct the employee to perform the transfer immediately, possibly asking for OTP or remote access.",
+   "notes": "Caller claims to be Hisham from bank risk management, uses urgency/fear and secrecy to push a money transfer to a temporary account. Employee is still questioning how to transfer, not yet complying but close to action.",
+   "policy_violations": [
+    "Request to transfer money to an unverified temporary account",
+    "Demand for secrecy, prohibiting employee from informing branch",
+    "Urgent money movement without proper verification"
+   ],
+   "risk": 78,
+   "stage": "SensitiveAction",
+   "strategy": "Using urgency and fear of fraud, claiming secrecy to pressure employee into moving money to a temporary account.",
+   "trend": "RISING"
+  },
+  "latency_ms": 2642
+ },
+ "0455b92b9b74aca62eb633ff275422b7c7564ba7": {
+  "raw": {
+   "alert_ar": "البنك عمره ما يطلب تحويل فلوس لحساب مؤقت عبر التليفون. ماتدوش أي تفاصيل وقفل المكالمة واتصل على الرقم الرسمي.",
+   "caller_goal": "Force employee to transfer money to fraudulent account",
+   "employee_state": "QUESTIONING",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "معاك الاستاذ هشام من ادارة المخاطر في البنك",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "urgency",
+     "quote": "فيه حد بيحاول يسحب فلوس من حسابك دلوقتي ولازم نتحرك بسرعة",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "secrecy",
+     "quote": "ماتكلمش الفرع عشان الموضوع سري",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "payment_request",
+     "quote": "لازم نحول الفلوس لحساب امن مؤقت لحد ما نقفل الاختراق",
+     "speaker": "CALLER",
+     "turn": 5
+    },
+    {
+     "label": "sensitive_action_request",
+     "quote": "افتح انستاباي وحول علي الرقم اللي هقولهولك",
+     "speaker": "CALLER",
+     "turn": 7
+    },
+    {
+     "label": "policy_violation",
+     "quote": "افتح انستاباي وحول علي الرقم اللي هقولهولك",
+     "speaker": "CALLER",
+     "turn": 7
+    }
+   ],
+   "next_likely_move": "Caller will provide the temporary account number and pressure employee to complete the transfer immediately.",
+   "notes": "Caller claims to be Hisham from bank risk management, uses urgency (account hack) and secrecy to push a money transfer to a temporary account via Instapay. Employee is asking how to transfer, still questioning. No compliance yet but high risk.",
+   "policy_violations": [
+    "Request to transfer money to a temporary account via phone",
+    "Instruction to keep matter secret from branch"
+   ],
+   "risk": 85,
+   "stage": "SensitiveAction",
+   "strategy": "Leverages fear of account compromise and secrecy to coerce a rapid money transfer to a fraudulent account.",
+   "trend": "RISING"
+  },
+  "latency_ms": 33816
+ },
+ "ca854b958b703f32d6d2062123bc28e59a43a653": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Establish trust as IT support for potential credential extraction",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "الو مساء الخير، انا احمد من الدعم الفني لل it في الادارة الرئيسية",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Employee may ask for verification or inquire what assistance is needed",
+   "notes": "Caller claims to be IT support from main admin. Pretext: IT help desk. No request yet. Employee hasn't responded.",
+   "policy_violations": [],
+   "risk": 25,
+   "stage": "IdentityClaim",
+   "strategy": "Pretending to be IT support to establish authority and gain trust",
+   "trend": "RISING"
+  },
+  "latency_ms": 1603
+ },
+ "b1e5c46d6bba1899b3b485de94dd4243ecfcb572": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Gain access to employee credentials",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "الو مساء الخير، انا احمد من الدعم الفني لل it في الادارة الرئيسية",
+     "speaker": "CALLER",
+     "turn": 1
+    }
+   ],
+   "next_likely_move": "Ask the employee to provide a password or OTP for a supposed IT task",
+   "notes": "Caller claims to be IT support from main admin. Pretext: IT help desk. No request yet. Employee responded politely, no suspicion shown.",
+   "policy_violations": [],
+   "risk": 30,
+   "stage": "IdentityClaim",
+   "strategy": "Claim IT support identity to build trust and later request credentials.",
+   "trend": "STEADY"
+  },
+  "latency_ms": 1197
+ },
+ "e2096217089e22429e23dd976f535bcbead8a469": {
+  "raw": {
+   "alert_ar": "",
+   "caller_goal": "Obtain employee credentials by creating urgency",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "الو مساء الخير، انا احمد من الدعم الفني لل it في الادارة الرئيسية",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "urgency",
+     "quote": "احنا لاحظنا محاولة دخول مشبوهة علي حسابك ولازم نحدث الامان حالا قبل ما يتقفل الحساب",
+     "speaker": "CALLER",
+     "turn": 3
+    }
+   ],
+   "next_likely_move": "Ask the employee to provide current password, OTP, or install remote‑access software to \"secure\" the account.",
+   "notes": "Caller claims IT support, pretext of suspicious login, creates urgency. No request yet, employee still neutral.",
+   "policy_violations": [],
+   "risk": 45,
+   "stage": "Pressure",
+   "strategy": "Impersonate IT, claim security breach to pressure employee into revealing credentials.",
+   "trend": "RISING"
+  },
+  "latency_ms": 11791
+ },
+ "dfa89c2bb45ab93bda2bcdc2ceaacee67c9aa152": {
+  "raw": {
+   "alert_ar": "الدعم الفني عمره ما يطلب كود التحقق (OTP) في التليفون. ماتدوش الكود وقفل المكالمة.",
+   "caller_goal": "Obtain OTP code",
+   "employee_state": "NORMAL",
+   "evidence": [
+    {
+     "label": "identity_claim",
+     "quote": "الو مساء الخير، انا احمد من الدعم الفني لل it في الادارة الرئيسية",
+     "speaker": "CALLER",
+     "turn": 1
+    },
+    {
+     "label": "urgency",
+     "quote": "لازم نحدث الامان حالا قبل ما يتقفل الحساب",
+     "speaker": "CALLER",
+     "turn": 3
+    },
+    {
+     "label": "otp_request",
+     "quote": "انا بعتلك كود تاكيد علي الموبايل في رسالة sms، مليهوني بسرعة عشان نلغي الاختراق",
+     "speaker": "CALLER",
+     "turn": 4
+    },
+    {
+     "label": "policy_violation",
+     "quote": "انا بعتلك كود تاكيد علي الموبايل في رسالة sms، مليهوني بسرعة عشان نلغي الاختراق",
+     "speaker": "CALLER",
+     "turn": 4
+    }
+   ],
+   "next_likely_move": "Caller will ask the employee to read out the OTP code received via SMS.",
+   "notes": "Caller claims to be IT support, cites a fake suspicious login, creates urgency, now requests OTP code. Employee has not responded yet, remains neutral.",
+   "policy_violations": [
+    "Request for OTP/code by phone violates policy"
+   ],
+   "risk": 70,
+   "stage": "CredentialExtraction",
+   "strategy": "Impersonating IT support and using urgency about a fake security breach to pressure the employee into revealing an OTP.",
+   "trend": "RISING"
+  },
+  "latency_ms": 33483
+ }
+}

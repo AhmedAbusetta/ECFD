@@ -4,6 +4,7 @@ FastAPI service providing multi-label social engineering tactic classification o
 """
 
 import os
+import re
 import time
 from typing import List, Optional
 from fastapi import FastAPI
@@ -40,7 +41,9 @@ class NlpResponse(BaseModel):
 
 # Rule-based tactic matching dictionary (serves as immediate robust baseline)
 RULES = {
-    "IMPERSONATION": ["it", "الدعم الفني", "البنك", "خدمة العملاء", "المرور", "الضرائب", "أنا فلان", "أنا من"],
+    # A claimed identity is context, not proof of fraud (ADR-0004); the backend weighs it
+    # by what the caller asks for afterwards.
+    "IDENTITY_CLAIM": ["IT", "الدعم الفني", "البنك", "خدمة العملاء", "المرور", "الضرائب", "أنا فلان", "أنا من"],
     "AUTHORITY": ["لازم", "قرار", "إيقاف الحساب", "تعليمات الإدارة", "أمر مباشر", "مخالفة"],
     "URGENCY": ["حالاً", "دلوقتي", "بسرعة", "قبل ما يقفل", "في خلال دقائق", "مشكلة فورية", "عاجل"],
     "OTP_REQUEST": ["كود", "رمز", "otp", "الرسالة اللي جاتلك", "ست أرقام", "ارقام التحقق"],
@@ -53,12 +56,21 @@ RULES = {
 }
 
 
+def _contains(text: str, kw: str) -> bool:
+    # Latin keywords must match whole words, otherwise "pin" fires on "shipping".
+    # All-caps acronyms ("IT") match case-sensitively so the pronoun "it" does not count.
+    # Arabic keywords keep substring matching so attached prefixes like "ال" / "و" still match.
+    if kw.isascii():
+        flags = 0 if kw.isupper() else re.IGNORECASE
+        return re.search(rf"(?<![A-Za-z0-9]){re.escape(kw)}(?![A-Za-z0-9])", text, flags) is not None
+    return kw in text.lower()
+
+
 def rule_match(text: str) -> List[TacticMatch]:
-    text_lower = text.lower()
     matches = []
     for tactic, keywords in RULES.items():
         for kw in keywords:
-            if kw in text_lower:
+            if _contains(text, kw):
                 matches.append(TacticMatch(type=tactic, confidence=0.92))
                 break
     return matches

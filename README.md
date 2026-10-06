@@ -7,7 +7,7 @@
 [![Telephony - Asterisk 20](https://img.shields.io/badge/Telephony-Asterisk%2020%20(PJSIP%2BARI)-F15A24?style=flat-square)](telephony/)
 [![Frontend - Next.js 14](https://img.shields.io/badge/Frontend-Next.js%2014%20%2F%20SignalR-000000?style=flat-square&logo=nextdotjs)](frontend/)
 [![Database - PostgreSQL 16](https://img.shields.io/badge/Database-PostgreSQL%2016-4169E1?style=flat-square&logo=postgresql)](backend/ECFD.Infrastructure/Persistence/)
-[![Build Status](https://img.shields.io/badge/CI-Passing-brightgreen?style=flat-square)]()
+[![Backend CI](https://github.com/ahmedabusetta/ECFD/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/ahmedabusetta/ECFD/actions/workflows/backend-ci.yml)
 [![Version](https://img.shields.io/badge/Version-v0.1.0--alpha-blue?style=flat-square)]()
 [![License](https://img.shields.io/badge/License-Academic%20Proprietary-yellow?style=flat-square)](LICENSE)
 
@@ -109,7 +109,7 @@ ECFD is engineered by a balanced **6-person multidisciplinary engineering team**
 
 ### 4.1 Social Engineering Tactic Classes (NLP)
 ECFD classifies active conversational utterances against a targeted 10-class taxonomy:
-1. `IMPERSONATION` — False identity claim (IT support, bank officer, executive).
+1. `IDENTITY_CLAIM` — Caller states a role (IT support, bank officer, executive). *Context, not proof of fraud* — it raises risk only combined with later requests ([ADR-0004](docs/adr/0004-identity-claims-are-context-not-evidence.md)).
 2. `AUTHORITY` — Asserting institutional power or policy compliance.
 3. `URGENCY` — Imposing artificial time constraints (*"account will close in 10 minutes"*).
 4. `OTP_REQUEST` — Direct solicitation of SMS/app verification codes.
@@ -124,7 +124,7 @@ ECFD classifies active conversational utterances against a targeted 10-class tax
 ```
 [ NORMAL CONVERSATION ]
           │
-          ▼  (Trigger: IMPERSONATION)
+          ▼  (Trigger: IDENTITY_CLAIM — records the claim, adds no risk by itself)
 [ IDENTITY_CLAIM ]
           │
           ▼  (Trigger: AUTHORITY / URGENCY)
@@ -206,22 +206,49 @@ ecfd/
 
 ### Prerequisites
 * Docker & Docker Compose
-* .NET 8 SDK *(for local backend dev)*
+* .NET 8 SDK or newer *(for local backend dev; see the audit report about .NET 8 end of support on 10 Nov 2026)*
 * Python 3.10+ *(for local ML dev)*
 * Node.js 20+ *(for local frontend dev)*
 
-### Option A: Run the Lightweight Mock Stack (Zero GPU Needed)
-Runs PostgreSQL, Asterisk, and ASP.NET Core with integrated mock ML engines:
+### Option A: Run the Simulated Demo Locally (No Docker, No GPU) — works today
+Runs the ASP.NET Core backend with in-process mock ML engines and the live dashboard. Utterances are injected over REST instead of coming from a real call.
 ```bash
-docker compose -f infra/docker-compose.mock.yml up -d
+dotnet run --project backend/ECFD.Api/ECFD.Api.csproj --urls http://localhost:5000
 ```
-* **Swagger UI:** [http://localhost:5000/swagger](http://localhost:5000/swagger)
-* **Backend Health Check:** [http://localhost:5000/api/health](http://localhost:5000/api/health)
+```bash
+npm --prefix frontend install
+npm --prefix frontend run dev
+```
+Open [http://localhost:3000](http://localhost:3000), then drive a call from Swagger ([http://localhost:5000/swagger](http://localhost:5000/swagger)): `POST /api/demo/start-call`, then several `POST /api/demo/utterance` calls, then `POST /api/demo/end-call`.
 
-### Option B: Run Full Production Stack (with Python ML Microservices)
+### Option A2: Speak to It — Real Egyptian-Arabic ASR (No Docker, No GPU)
+Uses real `faster-whisper` speech recognition and the rule-based NLP service. One-time setup (downloads the Whisper `small` model, ~480 MB, on first start):
 ```bash
-docker compose -f infra/docker-compose.yml up -d
+python -m venv ml/asr/.venv
+ml/asr/.venv/Scripts/pip install -r ml/asr/requirements.txt
 ```
+Then run each in its own terminal (Windows paths shown):
+```bash
+cmd /c "set ML_USE_MOCK_MODE=false&& ml\asr\.venv\Scripts\python -m uvicorn app:app --app-dir ml/asr --port 8001"
+```
+```bash
+ml/asr/.venv/Scripts/python -m uvicorn app:app --app-dir ml/nlp --port 8002
+```
+```bash
+dotnet run --project backend/ECFD.Api -- --MlServices:UseMocks=false
+```
+```bash
+npm --prefix frontend run dev
+```
+On [http://localhost:3000](http://localhost:3000): **Start simulated call** → **Record utterance** → speak one sentence → **Stop**. Repeat per sentence.
+
+Measured on an 8-core laptop CPU, 7.6 GB RAM (3 Oct 2026): ~4–5 s per 4–5 s utterance with Whisper `small` int8 — well above the 700 ms ASR target, so a GPU or the shared AI machine is needed for real-time use.
+
+### Option B: Docker Compose Stacks — not yet working
+* `infra/docker-compose.mock.yml` starts PostgreSQL and the backend only (no Asterisk; the backend still uses an in-memory database).
+* `infra/docker-compose.yml` references `backend/ECFD.Api/Dockerfile`, which does not exist yet, and the backend has no HTTP clients for the Python services yet.
+
+See [`docs/mock-status.md`](docs/mock-status.md) for what is real vs. simulated.
 
 ### Option C: Run .NET Unit Tests Locally
 ```bash
@@ -244,7 +271,7 @@ All core engineering specifications live inside [`docs/`](docs/):
 8. **[IP Ownership & Protection Guide](docs/ECFD_IP_Ownership_and_Protection_Guide.md)**: Egyptian IP Law No. 82/2002, university IP clearance, and startup spinout guidance.
 9. **[Collaboration & GitHub Handbook](docs/ECFD_Team_Collaboration_and_GitHub_Handbook.md)**: Monorepo rules, branch protection, EF migrations, and security policies.
 10. **[Team Contribution Register](docs/CONTRIBUTIONS.md)**: Living attribution ledger.
-11. **[Architecture Decision Records](docs/adr/)**: ADR-0001 (External Media), ADR-0002 (Risk Fusion), ADR-0003 (Faster-Whisper).
+11. **[Architecture Decision Records](docs/adr/)**: ADR-0001 (External Media), ADR-0002 (Risk Fusion), ADR-0003 (Faster-Whisper), ADR-0004 (Identity Claims as Context).
 
 ---
 

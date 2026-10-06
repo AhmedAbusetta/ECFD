@@ -1,0 +1,42 @@
+{
+  "scenarioId": "SCN-MFA-002",
+  "label": "FRAUD",
+  "description": "Help-desk impersonation (MGM-style): no secret named, the caller gets the employee to approve an MFA prompt and read a number.",
+  "language": "ar-EG/en",
+  "alertByTurn": 6,
+  "note": "alertByTurn = last turn (1-based) at which an alert is still in time; null for LEGIT calls (no alert expected). Drafted by Claude 2026-10-06 - a native speaker should review.",
+  "turns": [
+    {
+      "speaker": "CALLER",
+      "text": "صباح الخير، معاك كريم من الآي تي، احنا بنعمل ابديت للسيستم النهارده على كل الأجهزة"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "آه تمام، أنا محتاج أعمل حاجة؟"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "لأ متقلقش، بس الأكونت بتاعك ظاهر عندنا إنه مقفول، هفتحهولك من هنا"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "ماشي شكراً"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "هيجيلك دلوقتي إشعار على الموبايل، دوس موافق بس عشان أكمل"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "جالي أهو، أدوس موافق؟"
+    },
+    {
+      "speaker": "CALLER",
+      "text": "أيوه دوس موافق، وبعدها هيظهرلك رقم صغير قولهولي"
+    },
+    {
+      "speaker": "EMPLOYEE",
+      "text": "استنى أشوف"
+    }
+  ]
+}

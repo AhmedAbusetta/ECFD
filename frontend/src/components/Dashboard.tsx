@@ -1,26 +1,51 @@
+"use client";
+
+import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { signalRService } from "@/services/signalrService";
-import { CallSession, TranscriptSegment, TacticEvidence, RiskContributor, AlertEvent } from "@/types";
+import { CallSession, TranscriptSegment, TranscriptPartial, TacticEvidence, RiskContributor, AlertEvent, AnalystUpdate } from "@/types";
 import { RiskGauge } from "./RiskGauge";
 import { LiveTranscript } from "./LiveTranscript";
 import { AttackTimeline } from "./AttackTimeline";
 import { TacticList } from "./TacticList";
 import { AlertPanel } from "./AlertPanel";
+import { CallControls } from "./CallControls";
+import { AnalystPanel } from "./AnalystPanel";
 
 export const Dashboard: React.FC = () => {
   const [session, setSession] = useState<CallSession | null>(null);
   const [transcripts, setTranscripts] = useState<TranscriptSegment[]>([]);
+  const [partial, setPartial] = useState<TranscriptPartial | null>(null);
   const [tactics, setTactics] = useState<TacticEvidence[]>([]);
   const [riskScore, setRiskScore] = useState<number>(0);
   const [severity, setSeverity] = useState<string>("Low");
   const [stage, setStage] = useState<string>("Normal");
   const [contributors, setContributors] = useState<RiskContributor[]>([]);
   const [alerts, setAlerts] = useState<AlertEvent[]>([]);
+  const [analyst, setAnalyst] = useState<AnalystUpdate | null>(null);
+  // turns sent to the analyst that it has not answered yet (it answers in the background)
+  const [analystPending, setAnalystPending] = useState<number>(0);
 
   useEffect(() => {
     signalRService.startConnection(
-      (data) => setSession(data),
-      (data) => setTranscripts((prev) => [...prev, data]),
+      (data) => {
+        setSession(data);
+        setTranscripts([]);
+        setPartial(null);
+        setTactics([]);
+        setRiskScore(0);
+        setSeverity("Low");
+        setStage("Normal");
+        setContributors([]);
+        setAlerts([]);
+        setAnalyst(null);
+        setAnalystPending(0);
+      },
+      (data) => {
+        setPartial(null);
+        setTranscripts((prev) => [...prev, data]);
+        setAnalystPending((n) => n + 1);
+      },
       (data) => setTactics((prev) => [...prev, data]),
       (data) => setStage(data.newStage),
       (data) => {
@@ -29,7 +54,12 @@ export const Dashboard: React.FC = () => {
         setContributors(data.topContributors || []);
       },
       (data) => setAlerts((prev) => [data, ...prev]),
-      () => setSession(null)
+      () => setSession(null),
+      (data) => {
+        setAnalyst(data);
+        setAnalystPending((n) => Math.max(0, n - 1));
+      },
+      (data: TranscriptPartial) => setPartial(data.text ? data : null)
     );
 
     return () => signalRService.stopConnection();
@@ -48,22 +78,29 @@ export const Dashboard: React.FC = () => {
             Active Call Session: {session ? session.externalCallId : "No Active Call"} | Caller: {session?.caller || "Idle"}
           </p>
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          <Link href="/tests" className="px-3 py-1 bg-sky-700 hover:bg-sky-600 rounded text-xs font-bold text-white">
+            Test Lab →
+          </Link>
           <span className="px-3 py-1 bg-slate-900 border border-slate-800 rounded text-xs font-mono text-emerald-400">
             System: HEALTHY
           </span>
         </div>
       </header>
 
+      <CallControls callActive={session !== null} />
+
       {/* Main Grid */}
       <AlertPanel alerts={alerts} />
+
+      <AnalystPanel update={analyst} pending={analystPending} />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
         <div className="lg:col-span-1">
           <RiskGauge score={riskScore} severity={severity} stage={stage} contributors={contributors} />
         </div>
         <div className="lg:col-span-2">
-          <LiveTranscript segments={transcripts} />
+          <LiveTranscript segments={transcripts} partial={partial} />
         </div>
         <div className="lg:col-span-1">
           <TacticList tactics={tactics} />

@@ -18,7 +18,7 @@ public class MockAsrClient : IAsrClient
 
     private static int _phraseIdx = 0;
 
-    public Task<AsrResult> AnalyzeAudioAsync(Guid sessionId, Guid segmentId, byte[] pcmAudio, CancellationToken cancellationToken = default)
+    public Task<AsrResult> AnalyzeAudioAsync(Guid sessionId, Guid segmentId, byte[] audio, string audioFormat = "pcm_s16le", CancellationToken cancellationToken = default)
     {
         string text = SamplePhrases[_phraseIdx % SamplePhrases.Length];
         _phraseIdx++;
@@ -43,7 +43,7 @@ public class MockNlpClient : INlpClient
 
         if (text.Contains("IT") || text.Contains("الدعم الفني") || text.Contains("البنك"))
         {
-            tactics.Add(new TacticMatch("IMPERSONATION", 0.95f));
+            tactics.Add(new TacticMatch("IDENTITY_CLAIM", 0.95f));
         }
 
         if (text.Contains("حالاً") || text.Contains("مشكلة") || text.Contains("لازم"))

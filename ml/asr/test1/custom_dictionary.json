@@ -1,0 +1,16 @@
+{
+  "note": "Protected words sent to Speechmatics as additional_vocab. sounds_like = how Egyptians say it. Edit on the DEV split only.",
+  "additional_vocab": [
+    {"content": "OTP", "sounds_like": ["او تي بي", "أو تي بي"]},
+    {"content": "CVV", "sounds_like": ["سي في في"]},
+    {"content": "AnyDesk", "sounds_like": ["اني ديسك", "انى ديسك"]},
+    {"content": "password", "sounds_like": ["باسورد"]},
+    {"content": "account", "sounds_like": ["اكاونت"]},
+    {"content": "transfer", "sounds_like": ["ترانسفير"]},
+    {"content": "كود"},
+    {"content": "الباسورد"},
+    {"content": "رقم الكارت"},
+    {"content": "الرقم السري"},
+    {"content": "انستاباي"}
+  ]
+}
