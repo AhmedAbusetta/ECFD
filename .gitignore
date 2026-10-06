@@ -117,3 +117,6 @@ docs/reports/ECFD_Real_World_Feasibility.pdf
 research/
 # Build artifacts
 frontend/tsconfig.tsbuildinfo
+
+# Machine-specific Asterisk NAT address (written by telephony/asterisk/mac-setup.sh)
+telephony/asterisk/pjsip_nat.conf

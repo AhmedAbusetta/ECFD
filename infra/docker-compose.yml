@@ -35,6 +35,8 @@ services:
       - ../telephony/asterisk/ari.conf:/etc/asterisk/ari.conf:ro
       - ../telephony/asterisk/http.conf:/etc/asterisk/http.conf:ro
       - ../telephony/asterisk/rtp.conf:/etc/asterisk/rtp.conf:ro
+      # whole folder, so pjsip.conf can #tryinclude the machine-specific pjsip_nat.conf
+      - ../telephony/asterisk:/etc/asterisk/ecfd:ro
 
   # --- ASP.NET Core Backend ---
   backend:
