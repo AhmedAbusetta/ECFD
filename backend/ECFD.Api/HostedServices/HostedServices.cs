@@ -17,12 +17,19 @@ public class AsteriskHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("AsteriskHostedService: Initializing connection to Asterisk ARI WebSocket...");
+        _logger.LogWarning("AsteriskHostedService: stub - ARI WebSocket client not implemented yet; no calls will be tracked.");
         
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            // Heartbeat / listener loop
-            await Task.Delay(5000, stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                // Heartbeat / listener loop
+                await Task.Delay(5000, stoppingToken);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Normal shutdown.
         }
     }
 }
@@ -38,12 +45,55 @@ public class MediaGatewayHostedService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("MediaGatewayHostedService: Opening UDP listener on port 10000 for incoming RTP media...");
+        _logger.LogWarning("MediaGatewayHostedService: stub - RTP listener not implemented yet; no media is received.");
 
-        while (!stoppingToken.IsCancellationRequested)
+        try
         {
-            // Media ingestion loop
-            await Task.Delay(1000, stoppingToken);
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                // Media ingestion loop
+                await Task.Delay(1000, stoppingToken);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Normal shutdown.
+        }
+    }
+}
+
+/// <summary>
+/// Calls the ASR /health once at startup so a scaled-to-zero cloud GPU (Modal) loads the model
+/// before the first real utterance arrives. Fire-and-forget: failures are only logged.
+/// </summary>
+public class AsrWarmUpHostedService : BackgroundService
+{
+    private readonly string _asrUrl;
+    private readonly ILogger<AsrWarmUpHostedService> _logger;
+
+    public AsrWarmUpHostedService(string asrUrl, ILogger<AsrWarmUpHostedService> logger)
+    {
+        _asrUrl = asrUrl;
+        _logger = logger;
+    }
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(5) };
+        var started = DateTime.UtcNow;
+        try
+        {
+            using var response = await http.GetAsync(_asrUrl.TrimEnd('/') + "/health", stoppingToken);
+            _logger.LogInformation("ASR warm-up: {Url} answered {Status} after {Seconds:F0}s.",
+                _asrUrl, (int)response.StatusCode, (DateTime.UtcNow - started).TotalSeconds);
+        }
+        catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+        {
+            _logger.LogWarning("ASR warm-up: {Url} not reachable ({Error}); the fallback ASR will be used if configured.", _asrUrl, ex.Message);
+        }
+        catch (OperationCanceledException)
+        {
+            // Normal shutdown.
         }
     }
 }

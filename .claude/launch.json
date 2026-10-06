@@ -1,0 +1,77 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--project",
+        "backend/ECFD.Api/ECFD.Api.csproj",
+        "--urls",
+        "http://localhost:5000"
+      ],
+      "port": 5000
+    },
+    {
+      "name": "backend-real-ml",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--project",
+        "backend/ECFD.Api/ECFD.Api.csproj",
+        "--urls",
+        "http://localhost:5000",
+        "--MlServices:UseMocks=false"
+      ],
+      "port": 5000
+    },
+    {
+      "name": "asr",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "set ML_USE_MOCK_MODE=false&& ml\\asr\\.venv\\Scripts\\python -m uvicorn app:app --app-dir ml/asr --port 8001"
+      ],
+      "port": 8001
+    },
+    {
+      "name": "nlp",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "ml\\asr\\.venv\\Scripts\\python -m uvicorn app:app --app-dir ml/nlp --port 8002"
+      ],
+      "port": 8002
+    },
+    {
+      "name": "analyst",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "ml\\asr\\.venv\\Scripts\\python -m uvicorn app:app --app-dir ml/brain --port 8003"
+      ],
+      "port": 8003
+    },
+    {
+      "name": "lab",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "ml\\asr\\.venv\\Scripts\\python -m uvicorn app:app --app-dir ml/lab --port 8010"
+      ],
+      "port": 8010
+    },
+    {
+      "name": "dashboard",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "--prefix",
+        "frontend",
+        "run",
+        "dev"
+      ],
+      "port": 3000
+    }
+  ]
+}

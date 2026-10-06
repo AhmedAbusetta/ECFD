@@ -11,7 +11,7 @@
       "items": {
         "type": "string",
         "enum": [
-          "IMPERSONATION",
+          "IDENTITY_CLAIM",
           "AUTHORITY",
           "URGENCY",
           "OTP_REQUEST",

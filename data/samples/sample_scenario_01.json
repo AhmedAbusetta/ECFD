@@ -12,7 +12,7 @@
       "text": "ألو مساء الخير، أنا أحمد من الدعم الفني للـ IT في الإدارة الرئيسية",
       "startMs": 0,
       "endMs": 3500,
-      "tactics": ["IMPERSONATION", "AUTHORITY"],
+      "tactics": ["IDENTITY_CLAIM", "AUTHORITY"],
       "expectedStage": "IdentityClaim"
     },
     {

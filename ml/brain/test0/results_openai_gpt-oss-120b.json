@@ -1,0 +1,261 @@
+{
+  "model": "openai/gpt-oss-120b",
+  "prompt_version": "937a1eeb7f",
+  "answers": {
+    "T01": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "identity_claim",
+            "quote": "انا احمد من الدعم الفني"
+          }
+        ]
+      },
+      "latency_ms": 870
+    },
+    "T02": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "identity_claim",
+            "quote": "معاك مني من خدمة العملاء"
+          }
+        ]
+      },
+      "latency_ms": 734
+    },
+    "T03": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "otp_request",
+            "quote": "ابعتلي الكود"
+          },
+          {
+            "confidence": "high",
+            "label": "urgency",
+            "quote": "دلوقتي"
+          }
+        ]
+      },
+      "latency_ms": 1075
+    },
+    "T04": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": []
+      },
+      "latency_ms": 595
+    },
+    "T05": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "urgency",
+            "quote": "في خلال عشر دقايق"
+          },
+          {
+            "confidence": "high",
+            "label": "fear_threat",
+            "quote": "الحساب هيتقفل نهائي"
+          }
+        ]
+      },
+      "latency_ms": 1091
+    },
+    "T06": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "credential_request",
+            "quote": "قولي الباسورد"
+          }
+        ]
+      },
+      "latency_ms": 2166
+    },
+    "T07": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "credential_request",
+            "quote": "رقم الكارت وال cvv"
+          }
+        ]
+      },
+      "latency_ms": 846
+    },
+    "T08": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "payment_request",
+            "quote": "حول المبلغ علي انستاباي علي الرقم ده"
+          }
+        ]
+      },
+      "latency_ms": 1112
+    },
+    "T09": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "remote_access_request",
+            "quote": "نزل anydesk"
+          },
+          {
+            "confidence": "high",
+            "label": "credential_request",
+            "quote": "ابعتلي الرقم اللي هيظهرلك"
+          }
+        ]
+      },
+      "latency_ms": 1486
+    },
+    "T10": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "secrecy",
+            "quote": "ما تقولش لحد"
+          }
+        ]
+      },
+      "latency_ms": 691
+    },
+    "T11": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "verification_bypass",
+            "quote": "مش لازم تروح الفرع"
+          }
+        ]
+      },
+      "latency_ms": 11117
+    },
+    "T12": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "authority",
+            "quote": "دي تعليمات مباشرة من مدير الادارة"
+          }
+        ]
+      },
+      "latency_ms": 856
+    },
+    "T13": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "sensitive_action_request",
+            "quote": "افتح ووافق علي الطلب"
+          }
+        ]
+      },
+      "latency_ms": 11304
+    },
+    "T14": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": []
+      },
+      "latency_ms": 817
+    },
+    "T15": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": []
+      },
+      "latency_ms": 1106
+    },
+    "T16": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": []
+      },
+      "latency_ms": 11621
+    },
+    "T17": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "otp_request",
+            "quote": "اقرالي الارقام اللي جاتلك علي الموبايل"
+          },
+          {
+            "confidence": "high",
+            "label": "urgency",
+            "quote": "حالاً"
+          }
+        ]
+      },
+      "latency_ms": 1088
+    },
+    "T18": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "fear_threat",
+            "quote": "هنضطر نبلغ عنك وتتعرض للمساءلة القانونية"
+          }
+        ]
+      },
+      "latency_ms": 11067
+    },
+    "T19": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": [
+          {
+            "confidence": "high",
+            "label": "otp_request",
+            "quote": "ابعتهولي"
+          },
+          {
+            "confidence": "high",
+            "label": "urgency",
+            "quote": "سرعة"
+          }
+        ]
+      },
+      "latency_ms": 877
+    },
+    "T20": {
+      "raw": {
+        "needs_more_context": false,
+        "tactics": []
+      },
+      "latency_ms": 1638
+    }
+  }
+}

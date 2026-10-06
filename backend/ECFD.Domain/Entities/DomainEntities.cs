@@ -15,6 +15,8 @@ public class CallSession
     public DateTime? EndedAt { get; set; }
     public CallStatus Status { get; set; } = CallStatus.Ringing;
     public int CurrentRisk { get; set; } = 0;
+    /// <summary>Latest risk from the AI call analyst (LLM + deterministic floor); CurrentRisk = max(rules, analyst).</summary>
+    public int AnalystRisk { get; set; } = 0;
     public AttackStage CurrentStage { get; set; } = AttackStage.Normal;
 
     public List<CallParticipant> Participants { get; set; } = new();
@@ -42,6 +44,8 @@ public class TranscriptSegment
     public long StartMs { get; set; }
     public long EndMs { get; set; }
     public string Text { get; set; } = string.Empty;
+    /// <summary>CALLER or EMPLOYEE - from the phone leg, never inferred from the words.</summary>
+    public string Speaker { get; set; } = "CALLER";
     public float Confidence { get; set; }
     public bool IsFinal { get; set; }
     public string ModelVersion { get; set; } = "asr-v1";

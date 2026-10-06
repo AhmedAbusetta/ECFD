@@ -10,9 +10,9 @@ namespace ECFD.Infrastructure.SignalR;
 
 public class SignalRNotifier : ISignalRNotifier
 {
-    private readonly IHubContext<Hub> _hubContext;
+    private readonly IHubContext<DashboardHub> _hubContext;
 
-    public SignalRNotifier(IHubContext<Hub> hubContext)
+    public SignalRNotifier(IHubContext<DashboardHub> hubContext)
     {
         _hubContext = hubContext;
     }
@@ -36,11 +36,17 @@ public class SignalRNotifier : ISignalRNotifier
             sessionId,
             segmentId = segment.Id,
             text = segment.Text,
+            speaker = segment.Speaker,
             confidence = segment.Confidence,
             isFinal = segment.IsFinal,
             startMs = segment.StartMs,
             endMs = segment.EndMs
         });
+    }
+
+    public async Task NotifyTranscriptPartialAsync(Guid sessionId, string utteranceId, string speaker, string text)
+    {
+        await _hubContext.Clients.All.SendAsync("transcript.partial", new { sessionId, utteranceId, speaker, text });
     }
 
     public async Task NotifyTacticDetectedAsync(Guid sessionId, Evidence evidence)
@@ -49,7 +55,7 @@ public class SignalRNotifier : ISignalRNotifier
         {
             sessionId,
             evidenceId = evidence.Id,
-            tactic = evidence.Type.ToString(),
+            tactic = evidence.Type.ToLabel(),
             confidence = evidence.Confidence,
             timestamp = evidence.Timestamp
         });
@@ -88,6 +94,34 @@ public class SignalRNotifier : ISignalRNotifier
             title = alert.Title,
             description = alert.Description,
             createdAt = alert.CreatedAt
+        });
+    }
+
+    public async Task NotifyAnalystUpdatedAsync(Guid sessionId, AnalystResult result)
+    {
+        await _hubContext.Clients.All.SendAsync("analyst.updated", new
+        {
+            sessionId,
+            result.Turn,
+            result.Analyzed,
+            result.Risk,
+            result.Level,
+            result.LlmRisk,
+            result.Floor,
+            result.Stage,
+            result.Trend,
+            result.EmployeeState,
+            result.CallerGoal,
+            result.Strategy,
+            result.NextLikelyMove,
+            result.AlertAr,
+            result.PolicyViolations,
+            result.Evidence,
+            result.HardSignals,
+            result.Reasons,
+            result.Model,
+            result.LatencyMs,
+            result.Error
         });
     }
 

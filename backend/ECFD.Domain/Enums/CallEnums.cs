@@ -19,7 +19,7 @@ public enum AttackStage
 
 public enum EvidenceType
 {
-    Impersonation,
+    IdentityClaim, // caller states who they are - context, not proof of deceit (ADR-0004)
     Authority,
     Urgency,
     OtpRequest,

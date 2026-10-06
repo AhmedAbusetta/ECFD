@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.8" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.8" />
     <PackageReference Include="xunit" Version="2.5.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.5.3">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -21,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\ECFD.Domain\ECFD.Domain.csproj" />
     <ProjectReference Include="..\ECFD.Application\ECFD.Application.csproj" />
+    <ProjectReference Include="..\ECFD.Api\ECFD.Api.csproj" />
   </ItemGroup>
 
 </Project>

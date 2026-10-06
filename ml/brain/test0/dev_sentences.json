@@ -1,0 +1,26 @@
+{
+  "set": "dev",
+  "note": "Test 0 typed sentences. DEV set: tuning the prompt on these is allowed. Expected labels written by Claude (AI assistant) on 2026-10-03 and must be reviewed by a native Egyptian-Arabic teammate before results are reported.",
+  "items": [
+    {"id": "T01", "text": "أنا أحمد من الدعم الفني بتاع البنك", "expected": ["identity_claim"], "why": "Claim only. Real IT says this too."},
+    {"id": "T02", "text": "أهلا يا فندم، معاك منى من خدمة العملاء بخصوص الشكوى اللي حضرتك قدمتها امبارح", "expected": ["identity_claim"], "why": "Legitimate-sounding claim, still a claim."},
+    {"id": "T03", "text": "ابعتلي الكود اللي جالك في الرسالة دلوقتي", "expected": ["otp_request", "urgency"], "why": "Direct OTP request + 'now'."},
+    {"id": "T04", "text": "عمرك ما تدي حد الـ OTP بتاعك حتى لو قال إنه من البنك", "expected": [], "why": "Warning, not a request (key rule)."},
+    {"id": "T05", "text": "لو ما أكدتش العملية في خلال عشر دقايق الحساب هيتقفل نهائي", "expected": ["urgency", "fear_threat"], "why": "Deadline + threat of closure."},
+    {"id": "T06", "text": "قولي الباسورد بتاع حسابك عشان أعملك reset", "expected": ["credential_request"], "why": "Password request, code-switched."},
+    {"id": "T07", "text": "محتاج رقم الكارت والـ CVV اللي ورا عشان أوقف العملية المشبوهة", "expected": ["credential_request"], "why": "Card number + CVV."},
+    {"id": "T08", "text": "حول المبلغ على انستاباي على الرقم ده عشان نأمن فلوسك", "expected": ["payment_request"], "why": "Transfer request."},
+    {"id": "T09", "text": "نزل AnyDesk وابعتلي الرقم اللي هيظهرلك", "expected": ["remote_access_request"], "why": "Remote-access install."},
+    {"id": "T10", "text": "الموضوع ده سري، ما تقولش لحد في الفرع", "expected": ["secrecy"], "why": "Hide the call."},
+    {"id": "T11", "text": "مش لازم تروح الفرع، أنا هخلصلك كل حاجة من هنا على التليفون", "expected": ["verification_bypass"], "why": "Skip in-person verification."},
+    {"id": "T12", "text": "دي تعليمات مباشرة من مدير الإدارة ولازم تتنفذ", "expected": ["authority"], "why": "Invokes orders/rank."},
+    {"id": "T13", "text": "هيوصلك لينك، افتحه ووافق على الطلب اللي هيظهرلك", "expected": ["sensitive_action_request"], "why": "Click link + approve prompt."},
+    {"id": "T14", "text": "تمام يا فندم، الاجتماع الساعة خمسة في الدور التالت", "expected": [], "why": "Benign."},
+    {"id": "T15", "text": "ممكن تبعتلي التقرير بتاع الشهر ده على الإيميل؟", "expected": [], "why": "Ordinary work request (rule 2)."},
+    {"id": "T16", "text": "البنك عمره ما هيطلب منك الرقم السري على التليفون", "expected": [], "why": "Policy statement, not a request."},
+    {"id": "T17", "text": "اقرالي الأرقام اللي جاتلك على الموبايل حالا", "expected": ["otp_request", "urgency"], "why": "OTP request without the word 'code'."},
+    {"id": "T18", "text": "لو مش هتتعاون معايا هنضطر نبلغ عنك وتتعرض للمساءلة القانونية", "expected": ["fear_threat"], "why": "Legal threat."},
+    {"id": "T19", "context": ["أنا من الدعم الفني", "هيوصلك كود تأكيد على الموبايل دلوقتي"], "text": "ابعتهولي بسرعة", "expected": ["otp_request", "urgency"], "why": "'it' = the code; needs the context turns."},
+    {"id": "T20", "text": "الـ system عندنا واقع، ممكن تعمل restart للجهاز وتجرب تاني؟", "expected": [], "why": "Normal IT help, not a sensitive action."}
+  ]
+}

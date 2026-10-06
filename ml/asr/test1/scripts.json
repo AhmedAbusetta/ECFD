@@ -1,0 +1,206 @@
+{
+  "test": "Test 1 - speech to text on phone-quality clips",
+  "pass_line": "keyword recall >= 70% on protected words",
+  "note": "Scripts drafted by Claude (AI assistant) on 2026-10-04; a native Egyptian-Arabic teammate should check they sound natural before recording. All numbers are fake.",
+  "keyword_groups": {
+    "code": [
+      "كود",
+      "الكود",
+      "code",
+      "كوده"
+    ],
+    "otp": [
+      "otp",
+      "او تي بي",
+      "اوتيبي"
+    ],
+    "password": [
+      "باسورد",
+      "الباسورد",
+      "password",
+      "باس ورد",
+      "الرقم السري",
+      "كلمة السر",
+      "بسورد",
+      "البسورد",
+      "باسوورد",
+      "رقم سري",
+      "كلمه السر",
+      "كلمة سر"
+    ],
+    "cvv": [
+      "cvv",
+      "سي في في",
+      "سيفيفي",
+      "سي فى فى",
+      "سي في"
+    ],
+    "card_number": [
+      "رقم الكارت",
+      "card number",
+      "رقم الكرت",
+      "رقم كارت",
+      "رقم كرت"
+    ],
+    "account": [
+      "حساب",
+      "الحساب",
+      "حسابك",
+      "account",
+      "اكاونت",
+      "الاكاونت",
+      "اكونت"
+    ],
+    "transfer": [
+      "تحويل",
+      "التحويل",
+      "نحول",
+      "حول",
+      "transfer",
+      "ترانسفر",
+      "ترانسفير",
+      "ترانزفير",
+      "ترانسفار"
+    ],
+    "anydesk": [
+      "anydesk",
+      "اني ديسك",
+      "انى ديسك",
+      "any desk",
+      "anydisk",
+      "any disk",
+      "انيديسك",
+      "اني دسك"
+    ]
+  },
+  "clips": [
+    {
+      "id": "C01",
+      "kind": "fraud",
+      "text": "ألو، أنا كريم من خدمة العملاء في البنك. هيوصلك دلوقتي كود على الموبايل، ابعتهولي عشان أأكد بياناتك.",
+      "keywords": [
+        "code"
+      ]
+    },
+    {
+      "id": "C02",
+      "kind": "fraud",
+      "text": "حضرتك جالك رسالة فيها OTP من ست أرقام؟ قوليهولي بسرعة قبل ما يخلص.",
+      "keywords": [
+        "otp"
+      ]
+    },
+    {
+      "id": "C03",
+      "kind": "fraud",
+      "text": "عشان أعملك reset للحساب، محتاج الباسورد القديم بتاعك.",
+      "keywords": [
+        "account",
+        "password"
+      ]
+    },
+    {
+      "id": "C04",
+      "kind": "fraud",
+      "text": "اقرالي رقم الكارت كامل، والـ CVV اللي في ضهر الكارت.",
+      "keywords": [
+        "card_number",
+        "cvv"
+      ]
+    },
+    {
+      "id": "C05",
+      "kind": "fraud",
+      "text": "فيه عملية مشبوهة على حسابك، لازم نحول الفلوس لحساب أمان مؤقت دلوقتي.",
+      "keywords": [
+        "account",
+        "transfer"
+      ]
+    },
+    {
+      "id": "C06",
+      "kind": "fraud",
+      "text": "نزل برنامج اسمه AnyDesk من جوجل بلاي، وابعتلي الرقم اللي هيظهرلك.",
+      "keywords": [
+        "anydesk"
+      ]
+    },
+    {
+      "id": "C07",
+      "kind": "fraud",
+      "text": "متقلقش، الـ account بتاعك safe، بس محتاج الـ password عشان نعمل verification.",
+      "keywords": [
+        "account",
+        "password"
+      ]
+    },
+    {
+      "id": "C08",
+      "kind": "fraud",
+      "text": "اعمل transfer بالمبلغ على انستاباي، وأنا هرجعهولك بكرة الصبح.",
+      "keywords": [
+        "transfer"
+      ]
+    },
+    {
+      "id": "C09",
+      "kind": "fraud",
+      "text": "أنا عارف إن الرقم السري ما بيتقالش لحد، بس أنا من البنك ومحتاج أتأكد منه.",
+      "keywords": [
+        "password"
+      ]
+    },
+    {
+      "id": "C10",
+      "kind": "fraud",
+      "text": "هبعتلك كود تاني دلوقتي، المرة دي قوله بسرعة عشان الأولاني باظ.",
+      "keywords": [
+        "code"
+      ]
+    },
+    {
+      "id": "C11",
+      "kind": "normal",
+      "text": "صباح الخير، كنت عايز أسأل على كشف الحساب بتاع الشهر اللي فات.",
+      "keywords": [
+        "account"
+      ]
+    },
+    {
+      "id": "C12",
+      "kind": "normal",
+      "text": "التحويل اللي عملته امبارح وصل؟ عايز بس أتأكد إن الفلوس نزلت.",
+      "keywords": [
+        "transfer"
+      ]
+    },
+    {
+      "id": "C13",
+      "kind": "normal",
+      "text": "البنك عمره ما هيطلب منك الـ OTP أو الباسورد على التليفون، خلي بالك.",
+      "keywords": [
+        "otp",
+        "password"
+      ]
+    },
+    {
+      "id": "C14",
+      "kind": "fraud",
+      "noise": true,
+      "text": "رقم الكارت اللي معايا مش واضح، ممكن تقولهولي تاني؟",
+      "keywords": [
+        "card_number"
+      ]
+    },
+    {
+      "id": "C15",
+      "kind": "fraud",
+      "noise": true,
+      "text": "الكود هو تلاتة، سبعة، واحد، تسعة، اتنين، خمسة. قولهولي تاني عشان أتأكد.",
+      "keywords": [
+        "code"
+      ]
+    }
+  ],
+  "keyword_note": "Accepted spellings frozen on 2026-10-04 from a TTS dry run, BEFORE any real recording. Do not add spellings after looking at real DEV/TEST results without writing down why."
+}

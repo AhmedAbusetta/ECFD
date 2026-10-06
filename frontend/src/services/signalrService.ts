@@ -12,7 +12,9 @@ export class SignalRService {
     onStageChanged: (data: any) => void,
     onRiskUpdated: (data: any) => void,
     onAlertRaised: (data: any) => void,
-    onCallEnded: (data: any) => void
+    onCallEnded: (data: any) => void,
+    onAnalystUpdated?: (data: any) => void,
+    onTranscriptPartial?: (data: any) => void
   ) {
     this.connection = new signalR.HubConnectionBuilder()
       .withUrl(SIGNALR_URL)
@@ -26,6 +28,8 @@ export class SignalRService {
     this.connection.on("risk.updated", onRiskUpdated);
     this.connection.on("alert.raised", onAlertRaised);
     this.connection.on("call.ended", onCallEnded);
+    if (onAnalystUpdated) this.connection.on("analyst.updated", onAnalystUpdated);
+    if (onTranscriptPartial) this.connection.on("transcript.partial", onTranscriptPartial);
 
     this.connection
       .start()
