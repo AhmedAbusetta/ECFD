@@ -54,7 +54,10 @@ export const Dashboard: React.FC = () => {
         setContributors(data.topContributors || []);
       },
       (data) => setAlerts((prev) => [data, ...prev]),
-      () => setSession(null),
+      () => {
+        setSession(null);
+        setAnalystPending(0);
+      },
       (data) => {
         setAnalyst(data);
         setAnalystPending((n) => Math.max(0, n - 1));

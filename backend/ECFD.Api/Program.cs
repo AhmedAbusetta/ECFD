@@ -10,6 +10,8 @@ using ECFD.Infrastructure.Persistence;
 using ECFD.Infrastructure.MLClients;
 using ECFD.Infrastructure.SignalR;
 using ECFD.Api.HostedServices;
+using ECFD.Api.Pipeline;
+using ECFD.Infrastructure.Asterisk;
 
 var builder = WebApplication.CreateBuilder(args);
 // Machine-local, gitignored overrides (e.g. the private Modal ASR URL); command-line args still win.
@@ -90,9 +92,29 @@ else
 }
 builder.Services.AddSingleton<IAntiSpoofClient, MockAntiSpoofClient>();
 
-// Register Telephony & Media Gateway Background Services
-builder.Services.AddHostedService<AsteriskHostedService>();
-builder.Services.AddHostedService<MediaGatewayHostedService>();
+// The call pipeline shared by real PBX calls and the dashboard's simulated calls
+builder.Services.AddSingleton<CallPipeline>();
+
+// Telephony (ADR-0001): watch the PBX over ARI and tap answered calls; off unless Asterisk:Enabled=true
+var asteriskOptions = builder.Configuration.GetSection(AsteriskOptions.SectionName).Get<AsteriskOptions>() ?? new AsteriskOptions();
+if (asteriskOptions.Enabled && string.IsNullOrWhiteSpace(asteriskOptions.MediaHost))
+{
+    Console.Error.WriteLine("Asterisk:Enabled is true but Asterisk:MediaHost is empty - set it to this machine's IP " +
+                            "as the PBX sees it (e.g. the laptop's address on the hotspot). Telephony stays off.");
+    asteriskOptions.Enabled = false;
+}
+if (asteriskOptions.Enabled)
+{
+    builder.Services.AddSingleton(asteriskOptions);
+    builder.Services.AddHttpClient<IAriClient, AriClient>(c => c.Timeout = TimeSpan.FromSeconds(10));
+    builder.Services.AddSingleton<IMediaReceiverFactory, RtpReceiverFactory>();
+    builder.Services.AddSingleton<ICallSink, PipelineCallSink>();
+    builder.Services.AddSingleton(sp => new CallTapManager(
+        sp.GetRequiredService<IAriClient>(), sp.GetRequiredService<IMediaReceiverFactory>(),
+        sp.GetRequiredService<ICallSink>(), asteriskOptions, sp.GetRequiredService<ILogger<CallTapManager>>(),
+        asteriskOptions.Segmenter));
+    builder.Services.AddHostedService<AsteriskHostedService>();
+}
 
 // CORS for Frontend SignalR Connection
 builder.Services.AddCors(options =>

@@ -72,6 +72,31 @@
         "dev"
       ],
       "port": 3000
+    },
+    {
+      "name": "fake-pbx",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "ml\\asr\\.venv\\Scripts\\python -u telephony\\tools\\fake_pbx.py"
+      ],
+      "port": 8088
+    },
+    {
+      "name": "backend-telephony-local",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": [
+        "run",
+        "--project",
+        "backend/ECFD.Api/ECFD.Api.csproj",
+        "--urls",
+        "http://localhost:5000",
+        "--MlServices:UseMocks=false",
+        "--Asterisk:Enabled=true",
+        "--Asterisk:AriUrl=http://localhost:8088/ari",
+        "--Asterisk:MediaHost=127.0.0.1"
+      ],
+      "port": 5000
     }
   ]
 }

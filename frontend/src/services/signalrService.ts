@@ -4,6 +4,7 @@ const SIGNALR_URL = process.env.NEXT_PUBLIC_BACKEND_SIGNALR_URL || "http://local
 
 export class SignalRService {
   private connection: signalR.HubConnection | null = null;
+  private stopped = false;
 
   public startConnection(
     onCallStarted: (data: any) => void,
@@ -31,13 +32,27 @@ export class SignalRService {
     if (onAnalystUpdated) this.connection.on("analyst.updated", onAnalystUpdated);
     if (onTranscriptPartial) this.connection.on("transcript.partial", onTranscriptPartial);
 
-    this.connection
-      .start()
-      .then(() => console.log("[SignalR] Connected to ECFD Dashboard Hub"))
-      .catch((err) => console.error("[SignalR] Connection Error: ", err));
+    this.stopped = false;
+    this.connectWithRetry(this.connection);
+  }
+
+  // withAutomaticReconnect only covers connections that were up once; if the backend isn't running yet
+  // when the dashboard opens (or is restarting), keep trying so real calls still show up.
+  private async connectWithRetry(connection: signalR.HubConnection) {
+    for (let attempt = 0; !this.stopped && connection === this.connection; attempt++) {
+      try {
+        await connection.start();
+        console.log("[SignalR] Connected to ECFD Dashboard Hub");
+        return;
+      } catch (err) {
+        if (attempt === 0) console.warn("[SignalR] Backend not reachable yet, retrying every 3 s…", err);
+        await new Promise((resolve) => setTimeout(resolve, 3000));
+      }
+    }
   }
 
   public stopConnection() {
+    this.stopped = true;
     if (this.connection) {
       this.connection.stop();
     }

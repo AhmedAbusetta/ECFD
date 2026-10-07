@@ -5,7 +5,9 @@ explainable question per CALLER turn: did the caller just ask for something no l
 caller asks for by phone? If yes, the call's risk can never fall below FLOOR_RISK again.
 
 Hard signals (caller turns only):
-  SECRET    a request verb (تديني، ابعتلي، قولّي، اقرالي، محتاج …) + a secret object (الكود، الcvv، الباسورد …)
+  SECRET    a request verb (تديني، ابعتلي، قولّي، اقرالي …) + a secret object (الكود، الcvv، الباسورد …);
+            "محتاج / عايز" only count when the secret follows right after them ("محتاج الباسورد"),
+            so "محتاج تغير الباسورد" (change your password) is not a request for it
   PAYMENT   a payment verb (حوّل، ادفع) + a money word (الفلوس، انستاباي، فودافون كاش …)
   REMOTE    a remote-control app (إني ديسك، تيم فيوير) or the ID it shows
   BYPASS    a phrase that skips verification or moves money to a "safe" account
@@ -30,6 +32,9 @@ _PUNCT = re.compile(r"[\.,!?؟،؛:\"'()\[\]{}«»…\-–—]")
 _MIXED = re.compile(r"(?<=[؀-ۿ])(?=[a-z0-9])|(?<=[a-z0-9])(?=[؀-ۿ])")
 
 REQUEST_EXTRA = {"محتاج", "عايز", "عاوز"}  # "محتاج الباسورد" is a request even without a request verb
+# words allowed between "محتاج" and the secret: "محتاج منك الكود", "عايز من حضرتك الباسورد"
+NEED_FILLERS = {"منك", "من", "حضرتك", "بس", "تاني", "دلوقتي", "مني"}
+NEED_MAX_GAP = 2
 
 
 @dataclass
@@ -66,10 +71,15 @@ class _Group:
     def find(self, text: str) -> list:
         return [(concept, word) for concept, word, patterns in self.entries if any(p.search(text) for p in patterns)]
 
+    def spans(self, text: str) -> list:
+        """Every match as (concept, word, start, end)."""
+        return [(concept, word, m.start(), m.end())
+                for concept, word, patterns in self.entries for p in patterns for m in p.finditer(text)]
+
 
 class HardSignalFloor:
     def __init__(self, lexicon_csv: Path = LEXICON_CSV):
-        self.request, self.secret = _Group(), _Group()
+        self.request, self.need, self.secret = _Group(), _Group(), _Group()
         self.pay_verb, self.money = _Group(), _Group()
         self.remote, self.standalone = _Group(), _Group()
         with open(lexicon_csv, encoding="utf-8-sig") as f:
@@ -80,10 +90,15 @@ class HardSignalFloor:
                 variants = [v for v in row["Other spellings (| separated)"].split("|") if v.strip()]
                 if cat == "Request verb" and role == "HARD":
                     (self.pay_verb if concept == "PAYMENT" else self.request).add(concept, word, variants)
-                elif word in REQUEST_EXTRA or concept in ("FORWARD", "SCREENSHOT"):
+                elif word in REQUEST_EXTRA:
+                    self.need.add(concept, word, variants)
+                elif concept in ("FORWARD", "SCREENSHOT"):
                     self.request.add(concept, word, variants)
-                elif cat == "Secret object":
-                    (self.remote if concept == "REMOTE_ID" else self.secret).add(concept, word, variants)
+                elif cat == "Secret object" and concept == "REMOTE_ID":
+                    self.remote.add(concept, word, variants)
+                elif cat == "Secret object" and role == "HARD":
+                    # SCORE-only secrets (e.g. national ID: banks and HR ask for it legitimately) never fire alone
+                    self.secret.add(concept, word, variants)
                 elif concept == "REMOTE_APP" and role == "HARD":
                     self.remote.add(concept, word, variants)
                 elif concept in ("VERIFICATION_BYPASS", "SAFE_ACCOUNT"):
@@ -101,6 +116,14 @@ class HardSignalFloor:
         if requests:
             for concept, word in self.secret.find(t):
                 signals.append(HardSignal("SECRET", concept, (requests[0][1], word)))
+        else:
+            found = set()
+            for _, need_word, _, need_end in self.need.spans(t):
+                for concept, word, start, _ in self.secret.spans(t):
+                    gap = t[need_end:start].split()
+                    if start >= need_end and len(gap) <= NEED_MAX_GAP and all(w in NEED_FILLERS for w in gap)                             and concept not in found:
+                        found.add(concept)
+                        signals.append(HardSignal("SECRET", concept, (need_word, word)))
         pay = self.pay_verb.find(t)
         if pay:
             money = self.money.find(t)

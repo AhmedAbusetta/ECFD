@@ -27,7 +27,7 @@ services:
     restart: unless-stopped
     ports:
       - "5060:5060/udp"
-      - "127.0.0.1:8088:8088"   # ARI: local only; the backend reaches it as asterisk:8088
+      - "8088:8088"   # ARI: the ECFD backend (this machine or a laptop on the same network) controls taps here
       - "10000-10100:10000-10100/udp"
     volumes:
       - ../telephony/asterisk/pjsip.conf:/etc/asterisk/pjsip.conf:ro

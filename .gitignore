@@ -120,3 +120,9 @@ frontend/tsconfig.tsbuildinfo
 
 # Machine-specific Asterisk NAT address (written by telephony/asterisk/mac-setup.sh)
 telephony/asterisk/pjsip_nat.conf
+
+# Test 2: volunteers voices, names and transcripts (never commit)
+ml/asr/test2/recordings/
+ml/asr/test2/results/
+ml/asr/test2/pack/
+ml/asr/test2/team.json
