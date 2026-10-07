@@ -45,8 +45,9 @@ cat > "$NAT_FILE" <<EOF
 ; Phones must be told the Mac's address, not the container's, or calls have no audio.
 external_media_address=$IP
 external_signaling_address=$IP
-; treat every phone as "outside" Docker so the addresses above are always used
-local_net=127.0.0.1/32
+; Docker networks count as "local": Asterisk only rewrites its own (container) SDP address
+; when that address is inside local_net. 127.0.0.1/32 here means calls have no audio.
+local_net=172.16.0.0/12
 EOF
 ok "Wrote telephony/asterisk/pjsip_nat.conf"
 
