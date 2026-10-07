@@ -4,8 +4,8 @@
 
 | Subsystem | Service Route | Current Status | Integration Target | Owner |
 | :--- | :--- | :---: | :--- | :--- |
-| **Asterisk PBX** | ARI WebSocket | 🔴 Config only — no ARI client in backend | Sprint 2 | Member 1 |
-| **Media Gateway** | UDP RTP Listener | 🔴 Stub hosted service — no listener | Sprint 3 | Member 1 |
+| **Asterisk PBX** | ARI WebSocket + REST | 🟡 ARI client, call taps (snoop + External Media per side) built and tested against `telephony/tools/fake_pbx.py`; first real call on the Mac PBX pending | Sprint 2 | Member 1 |
+| **Media Gateway** | UDP RTP (slin16) 40000+ | 🟡 RTP receiver + sentence detection (energy VAD, live partials) built and tested end-to-end with the fake PBX; tuning on real phone audio pending | Sprint 3 | Member 1 |
 | **ASR Service** | `POST /v1/asr/analyze` | 🟢 Cohere Transcribe Arabic on Modal GPU (`ml/asr/modal_app.py`, ~1 s warm); falls back to local faster-whisper `small` after 8 s (cold start / outage). URL in gitignored `appsettings.Local.json` | Sprint 5 | Member 2 |
 | **NLP Service** | `POST /v1/nlp/analyze` | 🟡 Keyword rules, called by backend when `MlServices:UseMocks=false` | Sprint 6 (Rule) / Sprint 8 (MARBERT) | Member 3 |
 | **Anti-Spoof Service** | `POST /v1/voice/analyze` | 🟡 Constant mock (backend does not call it yet) | Sprint 9 (AASIST) | Member 4 |

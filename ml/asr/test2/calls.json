@@ -1,0 +1,801 @@
+{
+ "test": "Test 2 - recorded calls (caller and employee recorded by different people)",
+ "prefix": "T2",
+ "file_name": "T2_<call>_<turn>_<Name>.<ext>, e.g. T2_K13_05_Ola.m4a (turn = 2 digits)",
+ "note": "Drafted 2026-10-06. 12 of 17 calls are legitimate (70%), because most real calls are normal; 4 of them are look-alikes that use risky words harmlessly. alertByTurn = last turn (1-based) at which an alert is still in time (FRAUD only); LEGIT calls must not alert. A native-speaker teammate should check the lines sound natural before recording.",
+ "keyword_groups": {
+  "code": [
+   "كود",
+   "الكود",
+   "code",
+   "كوده"
+  ],
+  "otp": [
+   "otp",
+   "او تي بي",
+   "اوتيبي"
+  ],
+  "password": [
+   "باسورد",
+   "الباسورد",
+   "password",
+   "باس ورد",
+   "الرقم السري",
+   "كلمة السر",
+   "بسورد",
+   "البسورد",
+   "باسوورد",
+   "رقم سري",
+   "كلمه السر",
+   "كلمة سر"
+  ],
+  "cvv": [
+   "cvv",
+   "سي في في",
+   "سيفيفي",
+   "سي فى فى",
+   "سي في"
+  ],
+  "card_number": [
+   "رقم الكارت",
+   "card number",
+   "رقم الكرت",
+   "رقم كارت",
+   "رقم كرت"
+  ],
+  "account": [
+   "حساب",
+   "الحساب",
+   "حسابك",
+   "account",
+   "اكاونت",
+   "الاكاونت",
+   "اكونت"
+  ],
+  "transfer": [
+   "تحويل",
+   "التحويل",
+   "نحول",
+   "حول",
+   "transfer",
+   "ترانسفر",
+   "ترانسفير",
+   "ترانزفير",
+   "ترانسفار"
+  ],
+  "anydesk": [
+   "anydesk",
+   "اني ديسك",
+   "انى ديسك",
+   "any desk",
+   "anydisk",
+   "any disk",
+   "انيديسك",
+   "اني دسك"
+  ]
+ },
+ "calls": [
+  {
+   "id": "K01",
+   "label": "LEGIT",
+   "kind": "normal",
+   "description": "Supplier checking a delivery",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "صباح الخير، أنا أحمد من شركة التوريدات، كنت عايز أتأكد إن الشحنة وصلتكم امبارح.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "صباح النور، أيوه وصلت، بس كان ناقص كرتونتين.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "معلش جداً، هبعتهم مع العربية بتاعة بكرة الصبح.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام، ابعتلي بس إيميل فيه رقم الشحنة عشان المخزن.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "حاضر، خلال ساعة هيكون عندك.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "شكراً، مع السلامة.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K02",
+   "label": "LEGIT",
+   "kind": "normal",
+   "description": "Customer asking about branch hours",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "لو سمحت، ممكن أعرف مواعيد الفرع يوم السبت؟",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "أكيد يا فندم، الفرع بيفتح من تسعة الصبح لحد خمسة العصر.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "طب ولو عايز أفتح حساب جديد، محتاج أجيب إيه معايا؟",
+     "keywords": [
+      "account"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "البطاقة الشخصية وإيصال نور حديث، وحضرتك هتملا الاستمارة هنا في الفرع.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "تمام، شكراً جداً.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "العفو، نورتنا.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K03",
+   "label": "LEGIT",
+   "kind": "normal",
+   "description": "Booking a meeting",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "ألو، أنا عايز أحجز ميعاد مع الأستاذ محمود بخصوص العقد الجديد.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام يا فندم، هو فاضي يوم الحد الساعة اتناشر، يناسب حضرتك؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "الحد صعب شوية، ينفع الاتنين بعد الضهر؟",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "ينفع، الاتنين الساعة تلاتة، أكتبه لحضرتك؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "أيوه لو سمحت، وابعتلي التأكيد على الإيميل.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "حاضر، هيوصلك دلوقتي.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K04",
+   "label": "LEGIT",
+   "kind": "normal",
+   "description": "Angry customer about a high bill (urgent but honest)",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "الفاتورة بتاعة الشهر ده جت أعلى من العادي بكتير، وأنا لازم أفهم دلوقتي إيه اللي حصل.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "حقك يا فندم، ممكن رقم العميل عشان أراجعها؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "رقم العميل اتنين خمسة سبعة تسعة، ولو سمحت بسرعة عشان مستعجل.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "لقيتها، فيه رسوم تركيب اتحسبت مرتين بالغلط، هلغيها حالاً.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "طب كويس، يعني الفاتورة الجاية هتنزل؟",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "أيوه، والفرق هيرجعلك في الفاتورة الجاية إن شاء الله.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K05",
+   "label": "LEGIT",
+   "kind": "normal",
+   "description": "Colleague reporting a broken printer to IT",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "أهلاً، أنا سارة من المبيعات، الطابعة اللي عندنا في الدور التاني واقفة من الصبح.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام، بتطلع رسالة غلط معينة؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "بتقول الورق محشور، بس إحنا فتحناها ومفيش حاجة.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طيب، هفتحلك تيكت والفني هيعدي عليكم بعد الضهر.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "ماشي، شكراً.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "العفو، لو حصل حاجة تانية كلمني.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K06",
+   "label": "LEGIT",
+   "kind": "normal",
+   "description": "Sales call offering an internet package",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "مساء الخير، معاك كريم من شركة الإنترنت، حضرتك عندك دقيقة نكلمك عن عرض جديد؟",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "اتفضل، بس بسرعة عشان عندي شغل.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "العرض مية ميجا بأربعمية جنيه في الشهر، والتركيب ببلاش.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طب ابعتلي التفاصيل على الواتساب وأنا أشوفها.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "تمام، هبعتهالك دلوقتي، ولو حبيت تشترك كلمنا على الخط الساخن.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "ماشي، شكراً.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K07",
+   "label": "LEGIT",
+   "kind": "normal",
+   "description": "HR reminder about a training",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "صباح الخير، أنا من الموارد البشرية، حضرتك فاكر إن التدريب بكرة الساعة عشرة؟",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "آه فاكر، هو هيبقى في القاعة الكبيرة؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "لأ، اتنقل لأوضة الاجتماعات اللي في الدور التالت.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام، محتاج أجيب اللابتوب معايا؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "أيوه لو سمحت، وفيه بريزنتيشن هنبعتها على الإيميل النهارده.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "ماشي، شكراً على التذكير.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K08",
+   "label": "LEGIT",
+   "kind": "normal",
+   "description": "Manager urgently asking for a report (authority + urgency, legitimate)",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "إنت فين؟ المدير العام طالب تقرير المبيعات في خلال نص ساعة.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "التقرير شبه خلصان، فاضل بس أرقام الأسبوع ده.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "طب خلصه بسرعة وابعته على الإيميل بتاعي، الموضوع ضروري.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "حاضر، عشرين دقيقة ويكون عندك.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "تمام، ولو فيه أي مشكلة كلمني على طول.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "ماشي يا فندم.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K09",
+   "label": "LEGIT",
+   "kind": "lookalike",
+   "description": "Real bank fraud check: asks for nothing, offers a call-back",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "مساء الخير، معاك أحمد من خدمة العملاء في البنك، بكلم حضرتك بخصوص عملية شراء بألفين جنيه امبارح.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "آه أنا اللي عملتها، فيه مشكلة؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "لأ خالص يا فندم، يبقى كده العملية سليمة. وللعلم إحنا عمرنا ما هنطلب منك الكود أو الباسورد في التليفون.",
+     "keywords": [
+      "code",
+      "password"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام، كويس إنك قلتلي.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "ولو عايز تتأكد إن المكالمة من البنك، اقفل وكلمنا على الرقم اللي على الكارت.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام، شكراً.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K10",
+   "label": "LEGIT",
+   "kind": "lookalike",
+   "description": "Real help-desk password reset",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "EMPLOYEE",
+     "text": "ألو، أنا نسيت الباسورد بتاعي ومش عارف أدخل على السيستم.",
+     "keywords": [
+      "password"
+     ]
+    },
+    {
+     "speaker": "CALLER",
+     "text": "ولا يهمك، أنا من الهيلب ديسك، شفت التيكت بتاعتك وعملتلك ريست للباسورد.",
+     "keywords": [
+      "password"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طب أعمل إيه دلوقتي؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "هيجيلك إيميل فيه لينك تغير منه الباسورد بنفسك.",
+     "keywords": [
+      "password"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طب أنا محتاج أقولك حاجة؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "لأ خالص، ومتديش الباسورد لأي حد حتى لو قالك إنه من الآي تي. وحضرتك محتاج تغير الباسورد كل تلات شهور حسب سياسة الشركة.",
+     "keywords": [
+      "password"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام، شكراً جداً.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K11",
+   "label": "LEGIT",
+   "kind": "lookalike",
+   "description": "Real card renewal notice",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "صباح الخير، معاك البنك، الفيزا بتاعتك اتجددت.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طب أستلمها إزاي؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "تقدر تستلمها من الفرع ومعاك البطاقة الشخصية، في أي وقت الأسبوع ده.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام، والكارت القديم أعمل فيه إيه؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "سلّمه للموظف في الفرع وهو هيلغيه. ومحدش هيطلب منك أي أرقام في التليفون.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام، شكراً.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K12",
+   "label": "LEGIT",
+   "kind": "lookalike",
+   "description": "Supplier confirming a payment",
+   "alertByTurn": null,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "أهلاً، أنا من حسابات شركة التوريدات، التحويل اللي عملتوه امبارح وصل الحساب بتاعنا.",
+     "keywords": [
+      "transfer",
+      "account"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "تمام الحمد لله، والفاتورة الجاية امتى؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "آخر الشهر، ورقم الحساب اللي هتحول عليه مكتوب في الفاتورة الرسمية، ماتاخدوش من حد في التليفون.",
+     "keywords": [
+      "account",
+      "transfer"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "أكيد، أنا هعمل تحويل للمورد بعد ما المدير يوافق زي كل مرة.",
+     "keywords": [
+      "transfer"
+     ]
+    },
+    {
+     "speaker": "CALLER",
+     "text": "ممتاز، شكراً ليكم.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "العفو، مع السلامة.",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K13",
+   "label": "FRAUD",
+   "kind": "scam",
+   "description": "Bank impersonation asking for the card number and CVV",
+   "alertByTurn": 7,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "أهلاً، أنا محمد من البنك، إزاي حضرتك عامل إيه؟",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "الحمد لله، خير؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "فيه عملية مشبوهة على الكارت بتاعك ومحتاجين نأكد بياناتك عشان نوقفها.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طب ثواني اتشيك لحضرتك.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "اقرالي رقم الكارت كامل، وممكن تديني الـCVV اللي ورا بسرعة قبل ما العملية تعدي.",
+     "keywords": [
+      "card_number",
+      "cvv"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "هو حضرتك محتاجه ليه؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "دي إجراءات روتينية متقلقش، يلا بسرعة عشان السيستم هيقفل.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طيب الرقم هو أربعة تسعة…",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K14",
+   "label": "FRAUD",
+   "kind": "scam",
+   "description": "IT impersonation stealing an OTP",
+   "alertByTurn": 5,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "مساء الخير، أنا من الدعم الفني للآي تي، لاحظنا محاولة دخول مشبوهة على الأكونت بتاعك.",
+     "keywords": [
+      "account"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "بجد؟ أعمل إيه؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "لازم نأمن الحساب دلوقتي، هيوصلك كود على الموبايل.",
+     "keywords": [
+      "code",
+      "account"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "آه جالي رسالة.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "ابعتهولي أو قولي الـOTP بسرعة قبل ما يخلص.",
+     "keywords": [
+      "otp"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "ثواني، الكود هو…",
+     "keywords": [
+      "code"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "K15",
+   "label": "FRAUD",
+   "kind": "scam",
+   "description": "Fear and secrecy, then a transfer to a 'safe account'",
+   "alertByTurn": 5,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "ألو، أستاذ وليد؟ معاك هشام من إدارة المخاطر في البنك.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "أيوه أنا، خير؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "فيه حد بيحاول يسحب فلوس من حسابك دلوقتي، والموضوع ده سري، ماتقولش لحد ولا تكلم الفرع.",
+     "keywords": [
+      "account"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "يا نهار أبيض! أعمل إيه؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "لازم نحول فلوسك لحساب آمن مؤقت لحد ما نقفل الاختراق، افتح انستاباي وحوّل على الرقم اللي هقولهولك.",
+     "keywords": [
+      "transfer",
+      "account"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طب أحولهم إزاي؟",
+     "keywords": [
+      "transfer"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "K16",
+   "label": "FRAUD",
+   "kind": "scam",
+   "description": "Remote-access scam with AnyDesk",
+   "alertByTurn": 5,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "صباح الخير، أنا من الهيلب ديسك، الجهاز بتاعك عليه فيروس وبيبعت داتا بره الشركة.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "إيه ده؟ أنا مخدتش بالي من حاجة.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "مش محتاج تروح للآي تي، أنا هخلصهالك من هنا في دقيقتين.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "طب أعمل إيه؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "نزّل إني ديسك وقولي الرقم اللي ظاهرلك.",
+     "keywords": [
+      "anydesk"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "ثواني بنزله…",
+     "keywords": []
+    }
+   ]
+  },
+  {
+   "id": "K17",
+   "label": "FRAUD",
+   "kind": "scam",
+   "description": "MFA-approval scam with no risky keywords",
+   "alertByTurn": 5,
+   "turns": [
+    {
+     "speaker": "CALLER",
+     "text": "صباح الخير، معاك كريم من الآي تي، بنعمل ابديت للسيستم النهارده على كل الأجهزة.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "آه تمام، أنا محتاج أعمل حاجة؟",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "لأ متقلقش، بس الأكونت بتاعك ظاهر عندنا إنه مقفول، هفتحهولك من هنا.",
+     "keywords": [
+      "account"
+     ]
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "ماشي شكراً.",
+     "keywords": []
+    },
+    {
+     "speaker": "CALLER",
+     "text": "هيجيلك دلوقتي إشعار على الموبايل، دوس موافق بس، وبعدها هيظهرلك رقم قولهولي.",
+     "keywords": []
+    },
+    {
+     "speaker": "EMPLOYEE",
+     "text": "جالي أهو، الرقم هو تلاتة سبعة…",
+     "keywords": []
+    }
+   ]
+  }
+ ]
+}
