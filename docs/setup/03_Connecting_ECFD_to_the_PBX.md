@@ -49,6 +49,11 @@ The Mac and the laptop running the backend must be on the **same Wi-Fi / hotspot
 3. The dashboard shows the call by itself — no "Start simulated call" needed. Talk normally; each sentence appears after a short pause, with live words while speaking.
 4. Hang up: the call ends on the dashboard.
 
+### Spoken warning for the employee
+When the call turns critical, the **employee hears a short chime + warning in Egyptian Arabic** (e.g. "تنبيه، المتصل بيطلب كود التحقق، متدّيهوش."). The caller hears nothing. It plays through a whisper Snoop on the employee's leg; each kind (OTP, secret data, payment, remote app, impersonation, pressure, general) plays at most once, and at most 2 warnings per call.
+- The sounds are in `telephony/asterisk/sounds` (already mounted in the container; a `git pull` on the PBX machine is enough). Regenerate them after changing a sentence with `python telephony/tools/make_warning_sounds.py`.
+- Turn it off with `"WarnEmployee": false` in the `Asterisk` block; change the limit with `"MaxWarningsPerCall"`.
+
 ---
 
 ## Troubleshooting

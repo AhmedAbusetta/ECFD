@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
+using ECFD.Application.Alerts;
 using ECFD.Application.Audio;
 using Microsoft.Extensions.Logging;
 
@@ -32,7 +33,7 @@ public interface ICallSink
 /// so if ECFD crashes the phone call simply continues (fail-open). Each tap's audio is cut into
 /// sentences and passed to <see cref="ICallSink"/> with the speaker already known from the phone leg.
 /// </summary>
-public sealed class CallTapManager
+public sealed class CallTapManager : IEmployeeWarner
 {
     private static readonly Regex PjsipChannel = new(@"^PJSIP/(?<ext>.+)-[0-9a-fA-F]+$", RegexOptions.Compiled);
 
@@ -59,6 +60,54 @@ public sealed class CallTapManager
     }
 
     public int ActiveCalls => _byChannel.Values.Distinct().Count();
+
+    /// <summary>
+    /// Plays the recorded warning for <paramref name="kind"/> into the employee's ear through a whisper Snoop
+    /// on their leg (opened once per call). The caller hears nothing and the call itself is never touched;
+    /// each kind plays at most once, and at most <see cref="AsteriskOptions.MaxWarningsPerCall"/> per call.
+    /// </summary>
+    public async Task<bool> WarnEmployeeAsync(Guid sessionId, string kind, CancellationToken ct = default)
+    {
+        if (!_options.WarnEmployee)
+        {
+            return false;
+        }
+        var call = _byChannel.Values.FirstOrDefault(c => c.SessionId == sessionId);
+        var employee = call?.Legs.FirstOrDefault(l => l.Speaker == "EMPLOYEE");
+        if (call == null || employee == null)
+        {
+            return false; // not a PBX call (simulated), already hung up, or the employee side wasn't tapped
+        }
+
+        await call.WarnLock.WaitAsync(ct);
+        try
+        {
+            if (call.Warned.Contains(kind) || call.Warned.Count >= _options.MaxWarningsPerCall)
+            {
+                return false;
+            }
+            if (call.WhisperId == null)
+            {
+                var whisperId = $"ecfd-whisper-{Guid.NewGuid().ToString("N")[..12]}";
+                await _ari.WhisperSnoopAsync(employee.ChannelId, whisperId, ct);
+                call.WhisperId = whisperId;
+            }
+            var media = $"sound:{_options.WarningSoundsPath.TrimEnd('/')}/ecfd-warn-{kind}";
+            await _ari.PlayAsync(call.WhisperId, media, $"ecfd-play-{Guid.NewGuid().ToString("N")[..12]}", ct);
+            call.Warned.Add(kind);
+            _logger.LogInformation("Warning the employee ({Employee}) by voice: {Kind}", employee.ChannelId, kind);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning("Could not play the {Kind} warning to the employee: {Error}", kind, ex.Message);
+            return false;
+        }
+        finally
+        {
+            call.WarnLock.Release();
+        }
+    }
 
     public async Task HandleEventAsync(JsonElement ev, CancellationToken ct)
     {
@@ -162,6 +211,17 @@ public sealed class CallTapManager
 
     private async Task TeardownAsync(TappedCall call, CancellationToken ct)
     {
+        if (call.WhisperId != null)
+        {
+            try
+            {
+                await _ari.HangupAsync(call.WhisperId, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("Whisper cleanup: {Error}", ex.Message);
+            }
+        }
         foreach (var tap in call.Legs)
         {
             await tap.StopAsync(); // emits the last sentence and waits for its analysis to be queued
@@ -229,6 +289,10 @@ public sealed class CallTapManager
 
         public Guid SessionId { get; }
         public List<LegTap> Legs { get; } = new();
+        // spoken warnings: one whisper channel into the employee's ear, reused for every warning
+        public SemaphoreSlim WarnLock { get; } = new(1, 1);
+        public string? WhisperId { get; set; }
+        public HashSet<string> Warned { get; } = new();
     }
 
     /// <summary>One side of a call: audio in -> sentences -> sink, in order, without blocking the receiver.</summary>

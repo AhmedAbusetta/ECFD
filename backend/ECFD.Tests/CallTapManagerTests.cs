@@ -31,6 +31,8 @@ public class CallTapManagerTests
         }
 
         public Task SnoopAsync(string channelId, string snoopId, CancellationToken ct = default) => Record($"snoop {channelId} as {snoopId}");
+        public Task WhisperSnoopAsync(string channelId, string snoopId, CancellationToken ct = default) => Record($"whisper {channelId} as {snoopId}");
+        public Task PlayAsync(string channelId, string media, string playbackId, CancellationToken ct = default) => Record($"play {media} on {channelId}");
         public Task ExternalMediaAsync(string channelId, string externalHost, CancellationToken ct = default) => Record($"media {channelId} -> {externalHost}");
         public Task CreateBridgeAsync(string bridgeId, CancellationToken ct = default) => Record($"bridge {bridgeId}");
         public Task AddToBridgeAsync(string bridgeId, IEnumerable<string> channelIds, CancellationToken ct = default) => Record($"add {bridgeId} {string.Join(",", channelIds)}");
@@ -64,13 +66,15 @@ public class CallTapManagerTests
     private sealed class FakeSink : ICallSink
     {
         public ConcurrentQueue<(string Caller, string Employee)> Started { get; } = new();
+        public Guid LastSession { get; private set; }
         public ConcurrentQueue<(string Speaker, int Ms)> Sentences { get; } = new();
         public ConcurrentQueue<Guid> Ended { get; } = new();
 
         public Task<Guid> StartCallAsync(string externalCallId, string callerEndpoint, string employeeEndpoint, CancellationToken ct)
         {
             Started.Enqueue((callerEndpoint, employeeEndpoint));
-            return Task.FromResult(Guid.NewGuid());
+            LastSession = Guid.NewGuid();
+            return Task.FromResult(LastSession);
         }
 
         public Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, CancellationToken ct)
@@ -212,6 +216,40 @@ public class CallTapManagerTests
         // ports go back to the pool: the next call can use them again
         await _taps.HandleEventAsync(Dial("ANSWER", callerId: "2-1", peerId: "2-2"), CancellationToken.None);
         Assert.Equal(2, _media.Open.Count);
+    }
+
+    [Fact]
+    public async Task Warning_Is_Whispered_Into_The_Employee_Leg_Once_Per_Kind()
+    {
+        await _taps.HandleEventAsync(Dial("ANSWER"), CancellationToken.None);
+
+        Assert.True(await _taps.WarnEmployeeAsync(_sink.LastSession, "otp"));
+        Assert.False(await _taps.WarnEmployeeAsync(_sink.LastSession, "otp")); // not repeated
+        Assert.True(await _taps.WarnEmployeeAsync(_sink.LastSession, "secret"));
+        Assert.False(await _taps.WarnEmployeeAsync(_sink.LastSession, "payment")); // max 2 per call
+
+        var calls = _ari.Calls.ToList();
+        var whisper = Assert.Single(calls, c => c.StartsWith("whisper "));
+        Assert.StartsWith("whisper 1696-2 as ", whisper); // the employee's leg (1001), not the caller's
+        var whisperId = whisper.Split(" as ")[1];
+        Assert.Contains($"play sound:/etc/asterisk/ecfd/sounds/ecfd-warn-otp on {whisperId}", calls);
+        Assert.Contains($"play sound:/etc/asterisk/ecfd/sounds/ecfd-warn-secret on {whisperId}", calls);
+
+        await _taps.HandleEventAsync(Destroyed("1696-1"), CancellationToken.None);
+        await WaitFor(() => _sink.Ended.Count == 1);
+        Assert.Contains($"hangup {whisperId}", _ari.Calls);
+    }
+
+    [Fact]
+    public async Task No_Warning_For_A_Call_That_Is_Not_On_The_Pbx_Or_When_Playback_Fails()
+    {
+        Assert.False(await _taps.WarnEmployeeAsync(Guid.NewGuid(), "otp"));
+
+        await _taps.HandleEventAsync(Dial("ANSWER"), CancellationToken.None);
+        _ari.FailOn = "play ";
+        Assert.False(await _taps.WarnEmployeeAsync(_sink.LastSession, "otp")); // logged, never thrown
+        _ari.FailOn = null;
+        Assert.True(await _taps.WarnEmployeeAsync(_sink.LastSession, "otp")); // can still warn later
     }
 
     [Fact]

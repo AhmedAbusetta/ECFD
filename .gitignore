@@ -126,3 +126,6 @@ ml/asr/test2/recordings/
 ml/asr/test2/results/
 ml/asr/test2/pack/
 ml/asr/test2/team.json
+
+# generated warning prompts (synthetic voice, no recordings of people) - played to the employee by Asterisk
+!telephony/asterisk/sounds/*.wav

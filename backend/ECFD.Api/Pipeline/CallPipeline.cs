@@ -6,6 +6,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using ECFD.Application.Alerts;
 using ECFD.Application.Interfaces;
 using ECFD.Application.Risk;
 using ECFD.Domain.Entities;
@@ -51,6 +52,35 @@ public class CallPipeline
     private IAsrClient Asr => _services.GetRequiredService<IAsrClient>();
     private INlpClient Nlp => _services.GetRequiredService<INlpClient>();
     private IAnalystClient Analyst => _services.GetRequiredService<IAnalystClient>();
+    // Resolved per use: the telephony warner depends on the call sink, which depends on this pipeline.
+    private IEmployeeWarner? Warner => _services.GetService<IEmployeeWarner>();
+
+    /// <summary>On a PBX call, speak the fitting warning into the employee's ear. Never blocks or fails the turn.</summary>
+    private void WarnEmployee(CallSession session, IEnumerable<string>? hardSignals)
+    {
+        var warner = Warner;
+        if (warner == null)
+        {
+            return;
+        }
+        List<EvidenceType> evidence;
+        lock (session)
+        {
+            evidence = session.EvidenceList.Select(e => e.Type).ToList();
+        }
+        var kind = EmployeeWarnings.Pick(hardSignals, evidence);
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await warner.WarnEmployeeAsync(session.Id, kind);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Employee voice warning failed: {Error}", ex.Message);
+            }
+        });
+    }
 
     public static string SpeakerOf(string? speaker) =>
         string.Equals(speaker?.Trim(), "EMPLOYEE", StringComparison.OrdinalIgnoreCase) ? "EMPLOYEE" : "CALLER";
@@ -201,6 +231,7 @@ public class CallPipeline
         if (alert != null)
         {
             await _notifier.NotifyAlertRaisedAsync(session.Id, alert);
+            WarnEmployee(session, null);
         }
 
         return new TurnResult(session.Id, segment.Text, segment.Speaker, segment.ModelVersion, segment.Confidence,
@@ -255,6 +286,12 @@ public class CallPipeline
             if (alert != null)
             {
                 await _notifier.NotifyAlertRaisedAsync(session.Id, alert);
+            }
+            if (result.Level == "ALERT")
+            {
+                // every ALERT turn: a new, more specific request (e.g. the OTP after a general alert) gets
+                // its own warning; the warner plays each kind once and caps warnings per call
+                WarnEmployee(session, result.HardSignals);
             }
         }
         catch (Exception ex)
