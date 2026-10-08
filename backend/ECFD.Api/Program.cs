@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using ECFD.Application.Alerts;
 using ECFD.Application.Interfaces;
 using ECFD.Application.Risk;
 using ECFD.Application.Progression;
@@ -114,7 +115,12 @@ if (asteriskOptions.Enabled)
         sp.GetRequiredService<IAriClient>(), sp.GetRequiredService<IMediaReceiverFactory>(),
         sp.GetRequiredService<ICallSink>(), asteriskOptions, sp.GetRequiredService<ILogger<CallTapManager>>(),
         asteriskOptions.Segmenter));
+    builder.Services.AddSingleton<IEmployeeWarner>(sp => sp.GetRequiredService<CallTapManager>());
     builder.Services.AddHostedService<AsteriskHostedService>();
+}
+else
+{
+    builder.Services.AddSingleton<IEmployeeWarner, NoEmployeeWarner>();
 }
 
 // CORS for Frontend SignalR Connection

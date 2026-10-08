@@ -28,6 +28,13 @@ public class AsteriskOptions
     /// <summary>16 kHz signed linear: what the ASR expects. Asterisk converts from the phones' codec.</summary>
     public string MediaFormat { get; set; } = "slin16";
 
+    /// <summary>Speak a short recorded warning into the employee's ear when the call turns critical (the caller doesn't hear it).</summary>
+    public bool WarnEmployee { get; set; } = true;
+    /// <summary>Folder with the ecfd-warn-*.wav files, as Asterisk sees it (telephony/asterisk/sounds mounted in the container).</summary>
+    public string WarningSoundsPath { get; set; } = "/etc/asterisk/ecfd/sounds";
+    /// <summary>At most this many spoken warnings per call, so the employee isn't interrupted again and again.</summary>
+    public int MaxWarningsPerCall { get; set; } = 2;
+
     /// <summary>Sentence detection on call audio ("Asterisk:Segmenter:SilenceToCloseMs" etc.), tunable without a rebuild.</summary>
     public SegmenterOptions Segmenter { get; set; } = new();
 

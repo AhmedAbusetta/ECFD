@@ -130,6 +130,13 @@ async def snoop(channel_id: str, request: Request):
     return {"id": snoop_id, "name": f"Snoop/{channel_id}-00000001", "state": "Up"}
 
 
+@app.post("/ari/channels/{channel_id}/play")
+async def play(channel_id: str, request: Request):
+    # the real Asterisk would speak this into the employee's ear through the whisper snoop
+    print(f"  >> employee hears: {request.query_params.get('media')} (via {channel_id})")
+    return {"id": request.query_params.get("playbackId"), "state": "queued"}
+
+
 @app.post("/ari/channels/externalMedia")
 async def external_media(request: Request):
     q = request.query_params

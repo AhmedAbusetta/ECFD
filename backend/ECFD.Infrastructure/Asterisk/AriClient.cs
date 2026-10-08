@@ -17,6 +17,10 @@ public interface IAriClient
 {
     /// <summary>A Snoop channel that copies the audio coming FROM <paramref name="channelId"/> (one person's voice).</summary>
     Task SnoopAsync(string channelId, string snoopId, CancellationToken ct = default);
+    /// <summary>A Snoop channel that speaks INTO <paramref name="channelId"/>: whatever it plays only that person hears.</summary>
+    Task WhisperSnoopAsync(string channelId, string snoopId, CancellationToken ct = default);
+    /// <summary>Plays media (e.g. "sound:/path/file" without extension) on a channel.</summary>
+    Task PlayAsync(string channelId, string media, string playbackId, CancellationToken ct = default);
     /// <summary>An External Media channel that streams RTP to <paramref name="externalHost"/> (host:port).</summary>
     Task ExternalMediaAsync(string channelId, string externalHost, CancellationToken ct = default);
     Task CreateBridgeAsync(string bridgeId, CancellationToken ct = default);
@@ -48,6 +52,13 @@ public class AriClient : IAriClient
     public Task SnoopAsync(string channelId, string snoopId, CancellationToken ct = default) =>
         PostAsync($"channels/{Esc(channelId)}/snoop", ct,
             ("app", _options.AppName), ("spy", "in"), ("whisper", "none"), ("snoopId", snoopId));
+
+    public Task WhisperSnoopAsync(string channelId, string snoopId, CancellationToken ct = default) =>
+        PostAsync($"channels/{Esc(channelId)}/snoop", ct,
+            ("app", _options.AppName), ("spy", "none"), ("whisper", "out"), ("snoopId", snoopId));
+
+    public Task PlayAsync(string channelId, string media, string playbackId, CancellationToken ct = default) =>
+        PostAsync($"channels/{Esc(channelId)}/play", ct, ("media", media), ("playbackId", playbackId));
 
     public Task ExternalMediaAsync(string channelId, string externalHost, CancellationToken ct = default) =>
         PostAsync("channels/externalMedia", ct,
