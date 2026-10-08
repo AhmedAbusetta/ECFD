@@ -80,25 +80,46 @@ public class AsrWarmUpHostedService : BackgroundService
     private readonly string _asrUrl;
     private readonly ILogger<AsrWarmUpHostedService> _logger;
 
-    public AsrWarmUpHostedService(string asrUrl, ILogger<AsrWarmUpHostedService> logger)
+    private readonly TimeSpan _keepWarmEvery;
+
+    /// <param name="keepWarmEvery">Ping again at this interval for as long as the backend runs, so a cloud
+    /// GPU never scales to zero (and cold-starts) mid-session; zero = warm up once at start only.</param>
+    public AsrWarmUpHostedService(string asrUrl, ILogger<AsrWarmUpHostedService> logger, TimeSpan keepWarmEvery = default)
     {
         _asrUrl = asrUrl;
         _logger = logger;
+        _keepWarmEvery = keepWarmEvery;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         using var http = new System.Net.Http.HttpClient { Timeout = TimeSpan.FromMinutes(5) };
-        var started = DateTime.UtcNow;
+        var first = true;
         try
         {
-            using var response = await http.GetAsync(_asrUrl.TrimEnd('/') + "/health", stoppingToken);
-            _logger.LogInformation("ASR warm-up: {Url} answered {Status} after {Seconds:F0}s.",
-                _asrUrl, (int)response.StatusCode, (DateTime.UtcNow - started).TotalSeconds);
-        }
-        catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
-        {
-            _logger.LogWarning("ASR warm-up: {Url} not reachable ({Error}); the fallback ASR will be used if configured.", _asrUrl, ex.Message);
+            do
+            {
+                var started = DateTime.UtcNow;
+                try
+                {
+                    using var response = await http.GetAsync(_asrUrl.TrimEnd('/') + "/health", stoppingToken);
+                    if (first || !response.IsSuccessStatusCode)
+                    {
+                        _logger.LogInformation("ASR warm-up: {Url} answered {Status} after {Seconds:F0}s.",
+                            _asrUrl, (int)response.StatusCode, (DateTime.UtcNow - started).TotalSeconds);
+                    }
+                }
+                catch (Exception ex) when (!stoppingToken.IsCancellationRequested)
+                {
+                    _logger.LogWarning("ASR warm-up: {Url} not reachable ({Error}).", _asrUrl, ex.Message);
+                }
+                first = false;
+                if (_keepWarmEvery > TimeSpan.Zero)
+                {
+                    await Task.Delay(_keepWarmEvery, stoppingToken);
+                }
+            }
+            while (_keepWarmEvery > TimeSpan.Zero && !stoppingToken.IsCancellationRequested);
         }
         catch (OperationCanceledException)
         {

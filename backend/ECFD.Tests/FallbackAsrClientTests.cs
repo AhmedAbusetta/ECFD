@@ -70,6 +70,28 @@ public class FallbackAsrClientTests
     }
 
     [Fact]
+    public async Task After_A_Failure_Next_Sentences_Skip_The_Primary_Until_The_Cooldown_Ends()
+    {
+        // A slow primary must not make every sentence of a live call wait out the budget again.
+        var primary = new FakeAsr("cohere", ct => Task.Delay(TimeSpan.FromSeconds(30), ct));
+        var fallback = new FakeAsr("whisper");
+        var client = new FallbackAsrClient(primary, fallback, TimeSpan.FromSeconds(0.2),
+            NullLogger<FallbackAsrClient>.Instance, cooldown: TimeSpan.FromMilliseconds(400));
+
+        await client.AnalyzeAudioAsync(Guid.NewGuid(), Guid.NewGuid(), new byte[10]);
+        var started = DateTime.UtcNow;
+        var second = await client.AnalyzeAudioAsync(Guid.NewGuid(), Guid.NewGuid(), new byte[10]);
+
+        Assert.Equal("whisper", second.ModelVersion);
+        Assert.Equal(1, primary.Calls);
+        Assert.True(DateTime.UtcNow - started < TimeSpan.FromMilliseconds(150)); // no budget wait
+
+        await Task.Delay(500);
+        await client.AnalyzeAudioAsync(Guid.NewGuid(), Guid.NewGuid(), new byte[10]);
+        Assert.Equal(2, primary.Calls); // the primary is tried again once the cooldown is over
+    }
+
+    [Fact]
     public async Task Does_Not_Fall_Back_When_Caller_Cancels()
     {
         var primary = new FakeAsr("cohere", ct => Task.Delay(TimeSpan.FromSeconds(30), ct));

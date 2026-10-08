@@ -243,6 +243,7 @@ public sealed class CallTapManager
         private readonly Task _worker;
         private int _utteranceNo = 1;
         private int _partialBusy;
+        private int _sentencesPending; // finished sentences queued or being transcribed
 
         public LegTap(Guid sessionId, string channelId, string speaker, int port, string snoopId, string mediaChannelId,
             string bridgeId, ICallSink sink, SegmenterOptions segmenter, ILogger logger)
@@ -275,6 +276,7 @@ public sealed class CallTapManager
 
         private void OnSentence(byte[] pcm)
         {
+            Interlocked.Increment(ref _sentencesPending);
             _sentences.Writer.TryWrite((CurrentUtteranceId, pcm));
             _utteranceNo++;
         }
@@ -290,6 +292,12 @@ public sealed class CallTapManager
             if (Interlocked.Exchange(ref _partialBusy, 1) == 1)
             {
                 return; // the previous live update is still being transcribed; skip this one
+            }
+            if (Volatile.Read(ref _sentencesPending) > 0)
+            {
+                // finished sentences come first: live words would only compete with them for the ASR
+                Interlocked.Exchange(ref _partialBusy, 0);
+                return;
             }
             var id = CurrentUtteranceId;
             _ = Task.Run(async () =>
@@ -327,6 +335,13 @@ public sealed class CallTapManager
                 catch (Exception ex)
                 {
                     _logger.LogWarning("Analysing a {Speaker} sentence failed: {Error}", Speaker, ex.Message);
+                }
+                finally
+                {
+                    if (pcm != null)
+                    {
+                        Interlocked.Decrement(ref _sentencesPending);
+                    }
                 }
             }
         }

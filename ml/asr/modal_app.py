@@ -22,6 +22,7 @@ import modal
 MODEL_ID = "CohereLabs/cohere-transcribe-arabic-07-2026"
 GPU = os.getenv("ASR_GPU", "A10G")
 MIN_CONTAINERS = int(os.getenv("ASR_MIN_CONTAINERS", "0"))
+MAX_CONTAINERS = int(os.getenv("ASR_MAX_CONTAINERS", "1"))
 
 image = (
     modal.Image.debian_slim(python_version="3.11")
@@ -75,8 +76,12 @@ def _decode_to_16k_mono(raw: bytes):
     secrets=[modal.Secret.from_name("huggingface")],
     scaledown_window=300,  # stay warm 5 min after the last request
     min_containers=MIN_CONTAINERS,
+    # One GPU handles a whole call: live partials from both legs arrive together, and without
+    # a cap Modal starts a new GPU for each one (it hit the 10-GPU account limit).
+    max_containers=MAX_CONTAINERS,
     timeout=600,
 )
+@modal.concurrent(max_inputs=8)
 class CohereAsr:
     @modal.enter()
     def load(self):

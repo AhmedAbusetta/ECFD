@@ -27,6 +27,9 @@ public class MlServicesOptions
     public int AsrFallbackAfterSeconds { get; set; } = 8;
     /// <summary>Ping AsrUrl/health at startup so a scaled-to-zero cloud GPU is warm before the first call.</summary>
     public bool AsrWarmUpOnStart { get; set; } = true;
+    /// <summary>Ping again every N minutes while the backend runs (below Modal's 5-minute scale-down), so the
+    /// GPU stays loaded for the whole session. 0 = only at startup.</summary>
+    public int AsrKeepWarmMinutes { get; set; } = 4;
 
     /// <summary>AI call analyst service (ml/brain/app.py). Empty = analyst disabled, rules only.</summary>
     public string? AnalystUrl { get; set; }
@@ -81,18 +84,29 @@ public class FallbackAsrClient : IAsrClient
     private readonly IAsrClient _primary;
     private readonly IAsrClient _fallback;
     private readonly TimeSpan _primaryBudget;
+    private readonly TimeSpan _cooldown;
     private readonly ILogger<FallbackAsrClient> _logger;
+    private long _skipPrimaryUntilTicks;
 
-    public FallbackAsrClient(IAsrClient primary, IAsrClient fallback, TimeSpan primaryBudget, ILogger<FallbackAsrClient> logger)
+    /// <param name="cooldown">After the primary fails, go straight to the fallback for this long instead of
+    /// making every sentence wait out the budget again (default 30 s).</param>
+    public FallbackAsrClient(IAsrClient primary, IAsrClient fallback, TimeSpan primaryBudget, ILogger<FallbackAsrClient> logger,
+        TimeSpan? cooldown = null)
     {
         _primary = primary;
         _fallback = fallback;
         _primaryBudget = primaryBudget;
+        _cooldown = cooldown ?? TimeSpan.FromSeconds(30);
         _logger = logger;
     }
 
     public async Task<AsrResult> AnalyzeAudioAsync(Guid sessionId, Guid segmentId, byte[] audio, string audioFormat = "pcm_s16le", CancellationToken cancellationToken = default)
     {
+        if (DateTime.UtcNow.Ticks < Interlocked.Read(ref _skipPrimaryUntilTicks))
+        {
+            return await _fallback.AnalyzeAudioAsync(sessionId, segmentId, audio, audioFormat, cancellationToken);
+        }
+
         using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         budget.CancelAfter(_primaryBudget);
         try
@@ -101,8 +115,9 @@ public class FallbackAsrClient : IAsrClient
         }
         catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
         {
-            _logger.LogWarning("Primary ASR failed or exceeded {Budget}s for segment {SegmentId} ({Error}); using fallback ASR.",
-                _primaryBudget.TotalSeconds, segmentId, ex.Message);
+            Interlocked.Exchange(ref _skipPrimaryUntilTicks, DateTime.UtcNow.Add(_cooldown).Ticks);
+            _logger.LogWarning("Primary ASR failed or exceeded {Budget}s for segment {SegmentId} ({Error}); using fallback ASR for the next {Cooldown}s.",
+                _primaryBudget.TotalSeconds, segmentId, ex.Message, _cooldown.TotalSeconds);
             return await _fallback.AnalyzeAudioAsync(sessionId, segmentId, audio, audioFormat, cancellationToken);
         }
     }
