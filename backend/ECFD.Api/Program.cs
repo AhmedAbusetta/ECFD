@@ -70,7 +70,8 @@ else
             TimeSpan.FromSeconds(mlOptions.AsrFallbackAfterSeconds), sp.GetRequiredService<ILogger<FallbackAsrClient>>());
     });
     if (mlOptions.AsrWarmUpOnStart)
-        builder.Services.AddHostedService(sp => new AsrWarmUpHostedService(mlOptions.AsrUrl, sp.GetRequiredService<ILogger<AsrWarmUpHostedService>>()));
+        builder.Services.AddHostedService(sp => new AsrWarmUpHostedService(mlOptions.AsrUrl, sp.GetRequiredService<ILogger<AsrWarmUpHostedService>>(),
+        TimeSpan.FromMinutes(mlOptions.AsrKeepWarmMinutes)));
     builder.Services.AddHttpClient<INlpClient, HttpNlpClient>(c =>
     {
         c.BaseAddress = new Uri(mlOptions.NlpUrl);
