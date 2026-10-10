@@ -56,6 +56,9 @@ public interface IAnalystClient
     Task EndCallAsync(Guid sessionId, CancellationToken cancellationToken = default);
 }
 
+/// <summary>The caller's voice check after one more sentence. CallScore is null until there is enough evidence.</summary>
+public record VoiceUpdate(float SentenceScore, float? CallScore, int Sentences, bool Suspicious, string Model);
+
 public interface ISignalRNotifier
 {
     Task NotifyCallStartedAsync(CallSession session);
@@ -67,5 +70,9 @@ public interface ISignalRNotifier
     Task NotifyRiskUpdatedAsync(Guid sessionId, RiskResult risk);
     Task NotifyAlertRaisedAsync(Guid sessionId, Alert alert);
     Task NotifyAnalystUpdatedAsync(Guid sessionId, AnalystResult result);
+    /// <summary>Voice anti-spoofing result for the caller (per sentence and for the whole call).</summary>
+    Task NotifyVoiceUpdatedAsync(Guid sessionId, VoiceUpdate update);
+    /// <summary>A spoken warning was played into the employee's ear (kind: otp, secret, payment, ...).</summary>
+    Task NotifyEmployeeWarnedAsync(Guid sessionId, string kind);
     Task NotifyCallEndedAsync(Guid sessionId);
 }

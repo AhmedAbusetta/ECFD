@@ -10,6 +10,7 @@ using ECFD.Application.Alerts;
 using ECFD.Application.Interfaces;
 using ECFD.Application.Risk;
 using ECFD.Application.Voice;
+using ECFD.Infrastructure.MLClients;
 using ECFD.Domain.Entities;
 using ECFD.Domain.Enums;
 
@@ -77,7 +78,10 @@ public class CallPipeline
         {
             try
             {
-                await warner.WarnEmployeeAsync(session.Id, kind);
+                if (await warner.WarnEmployeeAsync(session.Id, kind))
+                {
+                    await _notifier.NotifyEmployeeWarnedAsync(session.Id, kind);
+                }
             }
             catch (Exception ex)
             {
@@ -132,6 +136,10 @@ public class CallPipeline
     /// </summary>
     public void AnalyzeVoiceInBackground(CallSession session, byte[] pcm16le)
     {
+        if (AntiSpoof is MockAntiSpoofClient)
+        {
+            return; // no detector configured: show nothing rather than a made-up score
+        }
         _ = Task.Run(async () =>
         {
             try
@@ -152,6 +160,8 @@ public class CallPipeline
         tracker.Add(result.SpoofProbability, result.QualityScore);
         _logger.LogInformation("Caller voice: spoof {Spoof:F2} (sentence {Count}), call score {Score}",
             result.SpoofProbability, tracker.Count, tracker.CallScore?.ToString("F2") ?? "-");
+        await _notifier.NotifyVoiceUpdatedAsync(session.Id, new VoiceUpdate(
+            result.SpoofProbability, tracker.CallScore, tracker.Count, tracker.IsSuspicious, result.ModelVersion));
         if (!tracker.IsSuspicious || tracker.CallScore is not { } score)
         {
             return;

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { signalRService } from "@/services/signalrService";
-import { CallSession, TranscriptSegment, TranscriptPartial, TacticEvidence, RiskContributor, AlertEvent, AnalystUpdate } from "@/types";
+import { CallSession, TranscriptSegment, TranscriptPartial, TacticEvidence, RiskContributor, AlertEvent, AnalystUpdate, VoiceUpdate, EmployeeWarning } from "@/types";
 import { RiskGauge } from "./RiskGauge";
 import { LiveTranscript } from "./LiveTranscript";
 import { AttackTimeline } from "./AttackTimeline";
@@ -11,6 +11,8 @@ import { TacticList } from "./TacticList";
 import { AlertPanel } from "./AlertPanel";
 import { CallControls } from "./CallControls";
 import { AnalystPanel } from "./AnalystPanel";
+import { VoicePanel } from "./VoicePanel";
+import { EmployeeWarnings } from "./EmployeeWarnings";
 
 export const Dashboard: React.FC = () => {
   const [session, setSession] = useState<CallSession | null>(null);
@@ -25,6 +27,8 @@ export const Dashboard: React.FC = () => {
   const [analyst, setAnalyst] = useState<AnalystUpdate | null>(null);
   // turns sent to the analyst that it has not answered yet (it answers in the background)
   const [analystPending, setAnalystPending] = useState<number>(0);
+  const [voice, setVoice] = useState<VoiceUpdate | null>(null);
+  const [warnings, setWarnings] = useState<EmployeeWarning[]>([]);
 
   useEffect(() => {
     signalRService.startConnection(
@@ -40,6 +44,8 @@ export const Dashboard: React.FC = () => {
         setAlerts([]);
         setAnalyst(null);
         setAnalystPending(0);
+        setVoice(null);
+        setWarnings([]);
       },
       (data) => {
         setPartial(null);
@@ -62,7 +68,9 @@ export const Dashboard: React.FC = () => {
         setAnalyst(data);
         setAnalystPending((n) => Math.max(0, n - 1));
       },
-      (data: TranscriptPartial) => setPartial(data.text ? data : null)
+      (data: TranscriptPartial) => setPartial(data.text ? data : null),
+      (data: VoiceUpdate) => setVoice(data),
+      (data: EmployeeWarning) => setWarnings((prev) => [...prev, data])
     );
 
     return () => signalRService.stopConnection();
@@ -96,6 +104,8 @@ export const Dashboard: React.FC = () => {
       {/* Main Grid */}
       <AlertPanel alerts={alerts} />
 
+      <EmployeeWarnings warnings={warnings} />
+
       <AnalystPanel update={analyst} pending={analystPending} />
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 mb-6">
@@ -106,6 +116,7 @@ export const Dashboard: React.FC = () => {
           <LiveTranscript segments={transcripts} partial={partial} />
         </div>
         <div className="lg:col-span-1">
+          <VoicePanel voice={voice} callActive={session !== null} />
           <TacticList tactics={tactics} />
         </div>
       </div>

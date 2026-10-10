@@ -86,3 +86,20 @@ export interface AnalystUpdate {
   latencyMs: number;
   error: string | null;
 }
+
+/** Voice anti-spoofing for the caller: per sentence and combined over the call (null until enough speech). */
+export interface VoiceUpdate {
+  sessionId: string;
+  sentenceScore: number;
+  callScore: number | null;
+  sentences: number;
+  suspicious: boolean;
+  model: string;
+}
+
+/** A spoken warning played into the employee's ear during the call. */
+export interface EmployeeWarning {
+  sessionId: string;
+  kind: string;
+  at: string;
+}
