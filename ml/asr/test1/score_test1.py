@@ -12,6 +12,9 @@ Engines:
   speechmatics   real-time API, settings from the project brief (needs SPEECHMATICS_API_KEY)
   whisper-service  the running ml/asr faster-whisper service - DRY RUN ONLY, to test this scorer
   cohere-modal     Cohere Transcribe Arabic on Modal (ml/asr/modal_app.py); URL from COHERE_ASR_URL in .env
+  qwen-modal       QwenCleo-ASR on Modal (ml/asr/modal_qwen_app.py); URL from QWEN_ASR_URL
+  nemotron-modal   NVIDIA Nemotron 3.5 ASR on Modal (ml/asr/modal_nemotron_app.py); URL from NEMOTRON_ASR_URL
+  whisper-ah-modal / whisper-mm-modal   Whisper large-v3 + Egyptian LoRA (ml/asr/modal_whisper_lora_app.py)
 
 Run with the ASR virtualenv (it has PyAV, numpy and websockets), from the repo root:
   ml/asr/.venv/Scripts/python ml/asr/test1/score_test1.py
@@ -49,9 +52,15 @@ def load_phone_audio(path: Path) -> bytes:
     pcm = []
     with av.open(str(path)) as container:
         resampler = av.AudioResampler(format="s16", layout="mono", rate=8000)
-        for frame in container.decode(audio=0):
-            for out in resampler.resample(frame):
-                pcm.append(out.to_ndarray().reshape(-1))
+        stream = container.streams.audio[0]
+        for packet in container.demux(stream):
+            try:
+                frames = packet.decode()
+            except av.error.InvalidDataError:
+                continue  # one damaged frame (some phone exports end with one): skip it like a player would
+            for frame in frames:
+                for out in resampler.resample(frame):
+                    pcm.append(out.to_ndarray().reshape(-1))
         for out in resampler.resample(None):  # flush
             pcm.append(out.to_ndarray().reshape(-1))
     samples = np.concatenate(pcm).astype(np.int16) if pcm else np.zeros(0, np.int16)
@@ -220,12 +229,21 @@ def load_answer_key() -> dict:
     return json.loads((HERE / "scripts.json").read_text(encoding="utf-8"))
 
 
+# extra engines deployed on Modal with the same contract: engine name -> .env variable holding its URL
+MODAL_ENGINES = {
+    "qwen-modal": "QWEN_ASR_URL",                  # ml/asr/modal_qwen_app.py
+    "nemotron-modal": "NEMOTRON_ASR_URL",          # ml/asr/modal_nemotron_app.py
+    "whisper-ah-modal": "WHISPER_AH_ASR_URL",      # modal_whisper_lora_app.py + AbdelrahmanHassan LoRA
+    "whisper-mm-modal": "WHISPER_MM_ASR_URL",      # modal_whisper_lora_app.py + maryamas222 LoRA v4
+}
+
+
 def make_engine(name: str):
     if name == "speechmatics":
         api_key = os.getenv("SPEECHMATICS_API_KEY")
         if not api_key:
             raise RuntimeError("SPEECHMATICS_API_KEY is missing from .env")
-        vocab = json.loads((HERE / "custom_dictionary.json").read_text(encoding="utf-8"))["additional_vocab"]
+        vocab = json.loads((Path(__file__).resolve().parent / "custom_dictionary.json").read_text(encoding="utf-8"))["additional_vocab"]
         return SpeechmaticsRealtime(api_key, os.getenv("SPEECHMATICS_RT_URL", "wss://eu2.rt.speechmatics.com/v2"),
                                     os.getenv("SPEECHMATICS_LANGUAGE", "ar_en"), vocab)
     if name == "cohere-modal":
@@ -233,6 +251,12 @@ def make_engine(name: str):
         if not url:
             raise RuntimeError("COHERE_ASR_URL is missing from .env (the URL printed by `modal deploy`)")
         return WhisperService(url, label="cohere-modal", timeout=300)
+    if name in MODAL_ENGINES:
+        var = MODAL_ENGINES[name]
+        url = os.getenv(var)
+        if not url:
+            raise RuntimeError(f"{var} is missing from .env (the URL printed by `modal deploy`)")
+        return WhisperService(url, label=name, timeout=300)
     return WhisperService(os.getenv("ASR_SERVICE_URL", "http://localhost:8001"))
 
 
@@ -311,7 +335,7 @@ def summarize(scored: list) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--engine", choices=["speechmatics", "whisper-service", "cohere-modal"], default="speechmatics")
+    parser.add_argument("--engine", choices=["speechmatics", "whisper-service", "cohere-modal", *MODAL_ENGINES], default="speechmatics")
     parser.add_argument("--recordings", default=str(HERE / "recordings"))
     parser.add_argument("--speakers", help="comma-separated speaker names to include (e.g. the DEV speakers)")
     args = parser.parse_args()

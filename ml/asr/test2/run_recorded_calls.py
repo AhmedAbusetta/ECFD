@@ -16,7 +16,7 @@ Usage (repo root, ASR virtualenv):
   ml/asr/.venv/Scripts/python ml/asr/test2/run_recorded_calls.py                # full run (Cohere + AI analyst)
   ml/asr/.venv/Scripts/python ml/asr/test2/run_recorded_calls.py --no-llm       # rules only, no LLM quota
   ml/asr/.venv/Scripts/python ml/asr/test2/run_recorded_calls.py --compare-text # also score the written scripts
-Options: --engine speechmatics|whisper-service|cohere-modal, --call K13, --allow-missing, --recordings DIR
+Options: --engine speechmatics|whisper-service|cohere-modal|qwen-modal|nemotron-modal|whisper-ah-modal|whisper-mm-modal, --call K13, --allow-missing, --recordings DIR
 """
 
 import argparse
@@ -36,7 +36,7 @@ from ecfd_brain.analyst import CallAnalyst, Turn  # noqa: E402
 from ecfd_brain.floor import HardSignalFloor  # noqa: E402
 
 t1.HERE = HERE  # transcripts cache -> ml/asr/test2/results/
-FILE_PATTERN = re.compile(r"^T2_(K\d{2})_(\d{2})_([A-Za-z0-9]+)\.(m4a|mp3|wav|ogg|opus|aac|flac|webm|3gp|amr)$", re.IGNORECASE)
+FILE_PATTERN = re.compile(r"^T2_(K\d{2})_(\d{2})_([A-Za-z0-9]+)\.(m4a|mp3|wav|ogg|opus|aac|flac|webm|3gp|amr|mp4)$", re.IGNORECASE)
 KINDS = ["normal", "lookalike", "scam"]
 
 
@@ -163,7 +163,7 @@ def run_detection(calls: list, turns_by_call: dict, analyst, floor, cache, args)
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true", help="only list missing / misnamed recordings")
-    parser.add_argument("--engine", choices=["cohere-modal", "speechmatics", "whisper-service"], default="cohere-modal")
+    parser.add_argument("--engine", choices=["cohere-modal", "speechmatics", "whisper-service", *t1.MODAL_ENGINES], default="cohere-modal")
     parser.add_argument("--call", help="run one call, e.g. K13")
     parser.add_argument("--recordings", default=str(HERE / "recordings"))
     parser.add_argument("--allow-missing", action="store_true", help="use the written line for turns not recorded yet")

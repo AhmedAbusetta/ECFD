@@ -129,3 +129,10 @@ ml/asr/test2/team.json
 
 # generated warning prompts (synthetic voice, no recordings of people) - played to the employee by Asterisk
 !telephony/asterisk/sounds/*.wav
+
+# anti-spoofing test set: contains the team's voices (Test 2) - never commit
+ml/antispoof/testset/audio/
+ml/antispoof/testset/manifest.json
+ml/antispoof/testset/_tmp/
+ml/antispoof/testset/results/
+ml/antispoof/testset/_clone/

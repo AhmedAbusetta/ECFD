@@ -72,7 +72,8 @@ def replay(scenario: dict, analyst: CallAnalyst, floor: HardSignalFloor, cache: 
         current = turns[:i]
         signals = floor.check(current[-1].text, current[-1].speaker)
         message = build_user_message(current, analyst.policy, notes, previous_risk)
-        key = hashlib.sha1(f"{PROMPT_VERSION}|{analyst.model}|{message}".encode("utf-8")).hexdigest()
+        version = getattr(analyst, "prompt_version", PROMPT_VERSION)
+        key = hashlib.sha1(f"{version}|{analyst.model}|{message}".encode("utf-8")).hexdigest()
         assessment = None
         if key in cache and not fresh:
             assessment = validate(cache[key]["raw"], current)
@@ -80,7 +81,7 @@ def replay(scenario: dict, analyst: CallAnalyst, floor: HardSignalFloor, cache: 
         elif not stored_only:
             try:
                 assessment = analyst.assess(current, notes, previous_risk)
-                cache[key] = {"raw": assessment.raw, "latency_ms": assessment.latency_ms}
+                cache[key] = {"raw": assessment.raw, "latency_ms": assessment.latency_ms, "usage": assessment.usage}
             except Exception as e:  # keep replaying: the floor still works without the LLM
                 print(f"    ! turn {i}: LLM failed ({e})")
         if assessment is not None:
