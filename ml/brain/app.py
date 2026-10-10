@@ -110,7 +110,7 @@ class TurnResponse(BaseModel):
 @app.get("/health")
 def health():
     return {"status": "HEALTHY" if analyst else "DEGRADED", "service": "analyst",
-            "model": analyst.model if analyst else None, "prompt": PROMPT_VERSION,
+            "model": analyst.model if analyst else None, "prompt": getattr(analyst, "prompt_version", PROMPT_VERSION),
             "error": analyst_error, "activeCalls": len(calls)}
 
 

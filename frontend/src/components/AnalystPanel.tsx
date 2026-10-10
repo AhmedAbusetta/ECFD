@@ -48,8 +48,9 @@ export const AnalystPanel: React.FC<{ update: AnalystUpdate | null; pending: num
           </div>
           <div className="space-y-3">
             <Row label="Caller is after">{update.callerGoal || "–"}</Row>
-            <Row label="Strategy">{update.strategy || "–"}</Row>
-            <Row label="Likely next move">{update.nextLikelyMove || "–"}</Row>
+            {/* the compact live analyst only fills these in its full-report mode */}
+            {update.strategy && <Row label="Strategy">{update.strategy}</Row>}
+            {update.nextLikelyMove && <Row label="Likely next move">{update.nextLikelyMove}</Row>}
           </div>
           <div className="space-y-3">
             {update.alertAr && (

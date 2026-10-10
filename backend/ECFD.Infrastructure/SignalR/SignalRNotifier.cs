@@ -125,6 +125,24 @@ public class SignalRNotifier : ISignalRNotifier
         });
     }
 
+    public async Task NotifyVoiceUpdatedAsync(Guid sessionId, VoiceUpdate update)
+    {
+        await _hubContext.Clients.All.SendAsync("voice.updated", new
+        {
+            sessionId,
+            update.SentenceScore,
+            update.CallScore,
+            update.Sentences,
+            update.Suspicious,
+            update.Model
+        });
+    }
+
+    public async Task NotifyEmployeeWarnedAsync(Guid sessionId, string kind)
+    {
+        await _hubContext.Clients.All.SendAsync("employee.warned", new { sessionId, kind, at = DateTime.UtcNow });
+    }
+
     public async Task NotifyCallEndedAsync(Guid sessionId)
     {
         await _hubContext.Clients.All.SendAsync("call.ended", new { sessionId });
