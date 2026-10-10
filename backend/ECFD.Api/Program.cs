@@ -92,7 +92,22 @@ else
 {
     builder.Services.AddSingleton<IAnalystClient, DisabledAnalystClient>();
 }
-builder.Services.AddSingleton<IAntiSpoofClient, MockAntiSpoofClient>();
+// Voice anti-spoofing (ml/antispoof): scores the caller's sentences in the background; mock = no voice evidence
+if (!mlOptions.UseMocks && !string.IsNullOrWhiteSpace(mlOptions.AntiSpoofUrl))
+{
+    builder.Services.AddHttpClient<IAntiSpoofClient, HttpAntiSpoofClient>(c =>
+    {
+        c.BaseAddress = new Uri(mlOptions.AntiSpoofUrl);
+        c.Timeout = TimeSpan.FromSeconds(mlOptions.AntiSpoofTimeoutSeconds);
+    });
+    // a second warm-up loop (AddHostedService would drop it as a duplicate of the ASR one)
+    builder.Services.AddSingleton<IHostedService>(sp => new AsrWarmUpHostedService(mlOptions.AntiSpoofUrl,
+        sp.GetRequiredService<ILogger<AsrWarmUpHostedService>>(), TimeSpan.FromMinutes(mlOptions.AsrKeepWarmMinutes), "Anti-spoofing"));
+}
+else
+{
+    builder.Services.AddSingleton<IAntiSpoofClient, MockAntiSpoofClient>();
+}
 
 // The call pipeline shared by real PBX calls and the dashboard's simulated calls
 builder.Services.AddSingleton<CallPipeline>();

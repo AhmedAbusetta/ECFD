@@ -35,6 +35,11 @@ public class MlServicesOptions
     public string? AnalystUrl { get; set; }
     /// <summary>The analyst runs in the background, so a slow LLM never blocks the call.</summary>
     public int AnalystTimeoutSeconds { get; set; } = 90;
+
+    /// <summary>Voice anti-spoofing service (ml/antispoof). Empty = mock (no voice evidence).</summary>
+    public string? AntiSpoofUrl { get; set; }
+    /// <summary>Runs in the background on the caller's sentences; long enough for a GPU cold start.</summary>
+    public int AntiSpoofTimeoutSeconds { get; set; } = 120;
 }
 
 // Wire contracts from docs/03_ECFD_Technical_Architecture.md (camelCase JSON).
@@ -44,7 +49,30 @@ internal record AnalystTurnRequestDto(string SessionId, string Speaker, string T
 internal record AnalystEndRequestDto(string SessionId);
 internal record NlpRequestDto(string SessionId, string SegmentId, string Text, string Language);
 internal record NlpTacticDto(string Type, float Confidence);
+internal record VoiceRequestDto(string SessionId, string WindowId, int SampleRate, string AudioFormat, string AudioBase64);
+internal record VoiceResponseDto(string WindowId, float SpoofProbability, float QualityScore, string ModelVersion, double InferenceDurationMs);
 internal record NlpResponseDto(string SegmentId, List<NlpTacticDto> Tactics, string ModelVersion, double InferenceDurationMs);
+
+public class HttpAntiSpoofClient : IAntiSpoofClient
+{
+    private readonly HttpClient _http;
+
+    public HttpAntiSpoofClient(HttpClient http)
+    {
+        _http = http;
+    }
+
+    /// <param name="pcmAudio">16 kHz mono 16-bit little-endian PCM (one sentence).</param>
+    public async Task<VoiceAnalysisResult> AnalyzeVoiceAsync(Guid sessionId, Guid windowId, byte[] pcmAudio, CancellationToken cancellationToken = default)
+    {
+        var request = new VoiceRequestDto(sessionId.ToString(), windowId.ToString(), 16000, "pcm_s16le", Convert.ToBase64String(pcmAudio));
+        using var response = await _http.PostAsJsonAsync("/v1/voice/analyze", request, cancellationToken);
+        await HttpAsrClient.EnsureSuccess(response, "Anti-spoofing", cancellationToken);
+        var dto = await response.Content.ReadFromJsonAsync<VoiceResponseDto>(cancellationToken)
+                  ?? throw new MlServiceException("Anti-spoofing returned an empty response");
+        return new VoiceAnalysisResult(windowId, dto.SpoofProbability, dto.QualityScore, dto.ModelVersion);
+    }
+}
 
 public class HttpAsrClient : IAsrClient
 {
