@@ -97,6 +97,15 @@
         "--Asterisk:MediaHost=127.0.0.1"
       ],
       "port": 5000
+    },
+    {
+      "name": "fake-pbx-deepfake",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "ml\\asr\\.venv\\Scripts\\python -u telephony\\tools\\fake_pbx.py --turn CALLER:ml/antispoof/testset/_clone/xtts/K13_01.wav --turn EMPLOYEE:ml/antispoof/testset/audio/real/K13_02.wav --turn CALLER:ml/antispoof/testset/_clone/xtts/K13_03.wav --turn EMPLOYEE:ml/antispoof/testset/audio/real/K13_04.wav --turn CALLER:ml/antispoof/testset/_clone/xtts/K13_05.wav --turn EMPLOYEE:ml/antispoof/testset/audio/real/K13_06.wav --turn CALLER:ml/antispoof/testset/_clone/xtts/K13_07.wav --turn EMPLOYEE:ml/antispoof/testset/audio/real/K13_08.wav"
+      ],
+      "port": 8088
     }
   ]
 }

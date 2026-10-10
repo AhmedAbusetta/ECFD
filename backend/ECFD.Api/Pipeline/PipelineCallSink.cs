@@ -34,6 +34,10 @@ public class PipelineCallSink : ICallSink
             return;
         }
         _pipeline.MarkFinalized(utteranceId);
+        if (speaker == "CALLER")
+        {
+            _pipeline.AnalyzeVoiceInBackground(session, pcm16le); // is this a real human voice?
+        }
         AsrResult asr;
         try
         {

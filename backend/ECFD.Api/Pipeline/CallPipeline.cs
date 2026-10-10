@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using ECFD.Application.Alerts;
 using ECFD.Application.Interfaces;
 using ECFD.Application.Risk;
+using ECFD.Application.Voice;
 using ECFD.Domain.Entities;
 using ECFD.Domain.Enums;
 
@@ -37,6 +38,8 @@ public class CallPipeline
     private readonly ConcurrentDictionary<Guid, CallSession> _active = new();
     // Utterances whose final transcription has started: a late live (partial) result must not overwrite it.
     private readonly ConcurrentDictionary<string, byte> _finalizedUtterances = new();
+    // Anti-spoofing scores of each call's caller sentences, combined into one call-level score.
+    private readonly ConcurrentDictionary<Guid, VoiceSpoofTracker> _voice = new();
 
     public CallPipeline(IServiceProvider services, ISignalRNotifier notifier, IAttackProgressionEngine progressionEngine,
         IRiskEngine riskEngine, ILogger<CallPipeline> logger)
@@ -52,6 +55,7 @@ public class CallPipeline
     private IAsrClient Asr => _services.GetRequiredService<IAsrClient>();
     private INlpClient Nlp => _services.GetRequiredService<INlpClient>();
     private IAnalystClient Analyst => _services.GetRequiredService<IAnalystClient>();
+    private IAntiSpoofClient AntiSpoof => _services.GetRequiredService<IAntiSpoofClient>();
     // Resolved per use: the telephony warner depends on the call sink, which depends on this pipeline.
     private IEmployeeWarner? Warner => _services.GetService<IEmployeeWarner>();
 
@@ -114,10 +118,82 @@ public class CallPipeline
             session.Status = CallStatus.Ended;
             session.EndedAt = DateTime.UtcNow;
         }
+        _voice.TryRemove(sessionId, out _);
         await _notifier.NotifyCallEndedAsync(sessionId);
         _ = Analyst.EndCallAsync(sessionId).ContinueWith(
             t => _logger.LogDebug("Analyst end-call failed: {Error}", t.Exception?.GetBaseException().Message),
             TaskContinuationOptions.OnlyOnFaulted);
+    }
+
+    /// <summary>
+    /// Scores one caller sentence for a synthetic voice, in the background (never delays the transcript).
+    /// Once the call-level score (<see cref="VoiceSpoofTracker"/>) is suspicious, it becomes VoiceSpoof evidence:
+    /// the risk engine adds at most 30 points for it, so a voice score alone never raises a critical alert.
+    /// </summary>
+    public void AnalyzeVoiceInBackground(CallSession session, byte[] pcm16le)
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await AnalyzeVoiceAsync(session, pcm16le);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning("Voice anti-spoofing failed for call {Session}: {Error}", session.Id, ex.Message);
+            }
+        });
+    }
+
+    public async Task AnalyzeVoiceAsync(CallSession session, byte[] pcm16le)
+    {
+        var result = await AntiSpoof.AnalyzeVoiceAsync(session.Id, Guid.NewGuid(), pcm16le);
+        var tracker = _voice.GetOrAdd(session.Id, _ => new VoiceSpoofTracker());
+        tracker.Add(result.SpoofProbability, result.QualityScore);
+        _logger.LogInformation("Caller voice: spoof {Spoof:F2} (sentence {Count}), call score {Score}",
+            result.SpoofProbability, tracker.Count, tracker.CallScore?.ToString("F2") ?? "-");
+        if (!tracker.IsSuspicious || tracker.CallScore is not { } score)
+        {
+            return;
+        }
+
+        Evidence? added = null;
+        RiskResult fused;
+        lock (session)
+        {
+            var existing = session.EvidenceList.FirstOrDefault(e => e.Type == EvidenceType.VoiceSpoof);
+            if (existing != null)
+            {
+                if (score <= existing.Confidence + 0.05f)
+                {
+                    return; // already reported at this level
+                }
+                existing.Confidence = score;
+            }
+            else
+            {
+                added = new Evidence
+                {
+                    CallSessionId = session.Id,
+                    Type = EvidenceType.VoiceSpoof,
+                    Confidence = score,
+                    Source = result.ModelVersion,
+                    ModelVersion = result.ModelVersion,
+                    PayloadJson = $"{{\"sentences\":{tracker.Count}}}"
+                };
+                session.EvidenceList.Add(added);
+            }
+            var rules = _riskEngine.Calculate(session.EvidenceList.ToList(), session.CurrentStage);
+            fused = RiskFusion.Fuse(rules, session.AnalystRisk, session.CurrentStage);
+            session.CurrentRisk = fused.Score;
+        }
+        _logger.LogWarning("Caller voice suspected synthetic in call {Session} (score {Score:F2} over {Count} sentences)",
+            session.Id, score, tracker.Count);
+        if (added != null)
+        {
+            await _notifier.NotifyTacticDetectedAsync(session.Id, added);
+        }
+        await _notifier.NotifyRiskUpdatedAsync(session.Id, fused);
     }
 
     public void MarkFinalized(string? utteranceId)
