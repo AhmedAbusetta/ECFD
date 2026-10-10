@@ -238,6 +238,62 @@ class GroqProvider:
         raise RuntimeError(f"Groq model did not call {tool_name}: " + json.dumps(payload)[:300])
 
 
+def _json_schema(schema: dict) -> dict:
+    """A tool's parameter schema as a structured-output schema: every object closed
+    (additionalProperties: false) and numeric bounds dropped (the validators clamp them anyway)."""
+    if isinstance(schema, list):
+        return [_json_schema(s) for s in schema]
+    if not isinstance(schema, dict):
+        return schema
+    out = {k: _json_schema(v) for k, v in schema.items() if k not in ("minimum", "maximum")}
+    if out.get("type") == "object":
+        out["additionalProperties"] = False
+    return out
+
+
+class AnthropicProvider:
+    """Claude via the Anthropic SDK. The answer is constrained to the tool's JSON schema with structured
+    outputs (current models don't accept a forced tool call); the long, fixed system prompt is cached."""
+
+    def __init__(self, api_key: str, model: str, effort: str = "low"):
+        import anthropic
+
+        self.client = anthropic.Anthropic(api_key=api_key, max_retries=4)
+        self.model = model
+        self.effort = effort
+        self.last_usage = {}
+
+    def call(self, user_message: str, system: str = SYSTEM_PROMPT, tool: tuple = None) -> dict:
+        tool_name, tool_description, tool_parameters = tool or (TOOL_NAME, TOOL_DESCRIPTION, TOOL_PARAMETERS)
+        request = dict(
+            model=self.model,
+            max_tokens=16000,
+            # the fixed instructions carry the cache marker; the per-turn message after it is never cached
+            system=[{"type": "text", "cache_control": {"type": "ephemeral"},
+                     "text": system + f"\n\nReturn your answer as the JSON object for {tool_name}: {tool_description}"}],
+            messages=[{"role": "user", "content": user_message}],
+            output_config={"effort": self.effort,
+                           "format": {"type": "json_schema", "schema": _json_schema(tool_parameters)}},
+        )
+        if self.model.startswith("claude-sonnet-5-5"):
+            # if a safety classifier declines, the API retries on a suitable model instead of failing
+            response = self.client.beta.messages.create(
+                **request, betas=["server-side-fallback-2026-07-01"], fallbacks="default")
+        else:
+            response = self.client.messages.create(**request)
+        u = response.usage
+        self.last_usage = {"input": u.input_tokens, "output": u.output_tokens,
+                           "cache_read": getattr(u, "cache_read_input_tokens", 0) or 0,
+                           "cache_write": getattr(u, "cache_creation_input_tokens", 0) or 0}
+        if response.stop_reason == "refusal":
+            raise RuntimeError(f"Claude declined the request ({getattr(response, 'stop_details', None)})")
+        text = next((b.text for b in response.content if b.type == "text"), "")
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            raise RuntimeError(f"Claude returned invalid JSON (stop_reason={response.stop_reason}): {text[:300]}") from None
+
+
 class Brain:
     def __init__(self, provider):
         self.provider = provider
@@ -257,7 +313,13 @@ class Brain:
             if not key:
                 raise RuntimeError("GROQ_API_KEY is missing from .env")
             return cls(GroqProvider(key, os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")))
-        raise RuntimeError(f"LLM_PROVIDER '{provider}' is not implemented yet (available: gemini, groq)")
+        if provider == "anthropic":
+            key = os.getenv("ANTHROPIC_API_KEY")
+            if not key:
+                raise RuntimeError("ANTHROPIC_API_KEY is missing from .env")
+            return cls(AnthropicProvider(key, os.getenv("ANTHROPIC_MODEL", "claude-sonnet-5-5"),
+                                         os.getenv("ANTHROPIC_EFFORT", "low")))
+        raise RuntimeError(f"LLM_PROVIDER '{provider}' is not implemented yet (available: anthropic, gemini, groq)")
 
     def classify(self, turn: str, context: list = None) -> BrainResult:
         start = time.time()

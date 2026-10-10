@@ -15,6 +15,7 @@ Safeguards:
     but can never lower a hard signal (trajectory.py)
 """
 
+import os
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -23,6 +24,7 @@ from .brain import TACTIC_LABELS
 from .normalize import normalize, quote_in_text
 
 PROMPT_VERSION = "analyst-v1"
+PROMPT_VERSION_COMPACT = "analyst-v2-compact"
 POLICY_DIR = Path(__file__).resolve().parents[1] / "policies"
 MAX_TURNS = 40          # older turns are summarised in the notes
 MAX_NOTES_CHARS = 800
@@ -126,8 +128,10 @@ class Assessment:
     next_likely_move: str = ""
     alert_ar: str = ""
     notes: str = ""
+    tactic: str = "none"                                # compact mode: strongest caller tactic so far
     model: str = ""
     latency_ms: int = 0
+    usage: dict = field(default_factory=dict)          # tokens, when the provider reports them
     raw: dict = field(default_factory=dict)
 
 
@@ -147,8 +151,8 @@ def build_user_message(turns: list, policy: str, notes: str = "", previous_risk:
                 else f"Your previous risk: {previous_risk}. Your notes: {notes or '(none)'}")
     omitted = f"(turns 1-{first} omitted; see your notes)\n" if first else ""
     return (
-        f"ORGANISATION POLICY:\n{policy}\n\n"
-        f"PREVIOUS ASSESSMENT:\n{previous}\n\n"
+        (f"ORGANISATION POLICY:\n{policy}\n\n" if policy else "")
+        + f"PREVIOUS ASSESSMENT:\n{previous}\n\n"
         f"<transcript>\n{omitted}" + "\n".join(lines) + "\n</transcript>\n\n"
         f"The latest turn is [{len(turns)}]. Assess the call as of turn [{len(turns)}]."
     )
@@ -170,6 +174,9 @@ def validate(args: dict, turns: list) -> Assessment:
     a.employee_state = _pick(args.get("employee_state"), EMPLOYEE_STATES, "NORMAL")
     for key in ("caller_goal", "strategy", "next_likely_move"):
         setattr(a, key, str(args.get(key) or "")[:300])
+    if args.get("why"):  # compact answer: "why" is what the caller is after
+        a.caller_goal = str(args["why"])[:120]
+    a.tactic = _pick(args.get("tactic"), EVIDENCE_LABELS + ["none"], "none")
     a.policy_violations = [str(v)[:200] for v in (args.get("policy_violations") or [])][:10]
     a.alert_ar = str(args.get("alert_ar") or "").strip()[:300]
     a.notes = str(args.get("notes") or "")[:MAX_NOTES_CHARS]
@@ -193,11 +200,48 @@ def validate(args: dict, turns: list) -> Assessment:
             a.evidence.append(ev)
     return a
 
+# Compact live answer (ANALYST_MODE=compact, the default): only what the pipeline acts on every turn.
+# The model still reads the whole call; it just writes ~60 tokens instead of a full report, which is
+# what makes a turn fast and cheap. The full report (mode "full") is for offline review and replays.
+COMPACT_OUTPUT_RULES = """OUTPUT RULES (be brief - every word you write delays the warning)
+- risk, stage (the furthest stage the caller has reached), trend, employee_state: as defined above.
+- tactic: the single strongest tactic the CALLER has used so far, or "none".
+- why: at most 12 English words, what the caller is after (e.g. "OTP to take over the bank account").
+- alert_ar: only when risk >= 60, ONE short Egyptian-Arabic sentence to the employee saying what to do (e.g. "ماتديهوش الكود واقفل وكلّم الرقم الرسمي."). Otherwise "".
+- notes: at most 25 English words for your next turn: claimed identity, what was requested at which turn.
+
+Always answer by calling the report_call_assessment function."""
+
+SYSTEM_PROMPT_COMPACT = SYSTEM_PROMPT.split("OUTPUT RULES")[0] + COMPACT_OUTPUT_RULES
+
+TOOL_PARAMETERS_COMPACT = {
+    "type": "object",
+    "properties": {
+        "risk": {"type": "integer", "minimum": 0, "maximum": 100},
+        "stage": {"type": "string", "enum": STAGES},
+        "trend": {"type": "string", "enum": TRENDS},
+        "employee_state": {"type": "string", "enum": EMPLOYEE_STATES},
+        "tactic": {"type": "string", "enum": EVIDENCE_LABELS + ["none"]},
+        "why": {"type": "string"},
+        "alert_ar": {"type": "string"},
+        "notes": {"type": "string"},
+    },
+    "required": ["risk", "stage", "trend", "employee_state", "tactic", "why", "alert_ar", "notes"],
+}
+
 
 class CallAnalyst:
-    def __init__(self, provider, policy: str = None):
+    def __init__(self, provider, policy: str = None, mode: str = None):
         self.provider = provider
         self.policy = policy if policy is not None else load_policy()
+        self.mode = (mode or os.getenv("ANALYST_MODE", "compact")).lower()
+        compact = self.mode == "compact"
+        self.prompt_version = PROMPT_VERSION_COMPACT if compact else PROMPT_VERSION
+        # compact: the policy joins the fixed system prompt, so the whole fixed part is one cacheable prefix
+        # and only the call itself changes from turn to turn
+        self.system = (SYSTEM_PROMPT_COMPACT + f"\n\nORGANISATION POLICY:\n{self.policy}") if compact else SYSTEM_PROMPT
+        self._policy_in_message = "" if compact else self.policy
+        self.tool = (TOOL_NAME, TOOL_DESCRIPTION, TOOL_PARAMETERS_COMPACT if compact else TOOL_PARAMETERS)
 
     @classmethod
     def from_env(cls, policy: str = None) -> "CallAnalyst":
@@ -211,11 +255,12 @@ class CallAnalyst:
     def assess(self, turns: list, notes: str = "", previous_risk: int = None) -> Assessment:
         start = time.time()
         args = self.provider.call(
-            build_user_message(turns, self.policy, notes, previous_risk),
-            system=SYSTEM_PROMPT,
-            tool=(TOOL_NAME, TOOL_DESCRIPTION, TOOL_PARAMETERS),
+            build_user_message(turns, self._policy_in_message, notes, previous_risk),
+            system=self.system,
+            tool=self.tool,
         )
         result = validate(args, turns)
         result.model = self.model
+        result.usage = dict(getattr(self.provider, "last_usage", None) or {})
         result.latency_ms = int((time.time() - start) * 1000)
         return result
