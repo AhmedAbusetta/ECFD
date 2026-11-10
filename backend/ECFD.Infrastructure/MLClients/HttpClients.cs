@@ -21,10 +21,6 @@ public class MlServicesOptions
     public int AsrTimeoutSeconds { get; set; } = 60;
     public int NlpTimeoutSeconds { get; set; } = 10;
 
-    /// <summary>Optional second ASR (e.g. local faster-whisper) used when AsrUrl fails or is too slow. Empty = no fallback.</summary>
-    public string? AsrFallbackUrl { get; set; }
-    /// <summary>How long the primary ASR gets before the fallback takes over (a Modal cold start takes ~60 s).</summary>
-    public int AsrFallbackAfterSeconds { get; set; } = 8;
     /// <summary>Ping AsrUrl/health at startup so a scaled-to-zero cloud GPU is warm before the first call.</summary>
     public bool AsrWarmUpOnStart { get; set; } = true;
     /// <summary>Ping again every N minutes while the backend runs (below Modal's 5-minute scale-down), so the
@@ -86,11 +82,30 @@ public class HttpAsrClient : IAsrClient
     public async Task<AsrResult> AnalyzeAudioAsync(Guid sessionId, Guid segmentId, byte[] audio, string audioFormat = "pcm_s16le", CancellationToken cancellationToken = default)
     {
         var request = new AsrRequestDto(sessionId.ToString(), segmentId.ToString(), 16000, audioFormat, "ar", Convert.ToBase64String(audio));
-        using var response = await _http.PostAsJsonAsync("/v1/asr/analyze", request, cancellationToken);
+        using var response = await PostWithOneRetryAsync(request, cancellationToken);
         await EnsureSuccess(response, "ASR", cancellationToken);
         var dto = await response.Content.ReadFromJsonAsync<AsrResponseDto>(cancellationToken)
                   ?? throw new MlServiceException("ASR returned an empty response");
         return new AsrResult(segmentId, dto.Text, dto.Confidence, dto.IsFinal, dto.StartMs, dto.EndMs, dto.ModelVersion);
+    }
+
+    /// <summary>A server error or a dropped connection is retried once at once; a timeout is not (that is the cold-start wait).</summary>
+    private async Task<HttpResponseMessage> PostWithOneRetryAsync(AsrRequestDto request, CancellationToken ct)
+    {
+        try
+        {
+            var response = await _http.PostAsJsonAsync("/v1/asr/analyze", request, ct);
+            if ((int)response.StatusCode < 500)
+            {
+                return response;
+            }
+            response.Dispose();
+        }
+        catch (HttpRequestException)
+        {
+        }
+        await Task.Delay(300, ct);
+        return await _http.PostAsJsonAsync("/v1/asr/analyze", request, ct);
     }
 
     internal static async Task EnsureSuccess(HttpResponseMessage response, string service, CancellationToken ct)
@@ -99,54 +114,6 @@ public class HttpAsrClient : IAsrClient
         {
             var body = await response.Content.ReadAsStringAsync(ct);
             throw new MlServiceException($"{service} service returned {(int)response.StatusCode}: {body}");
-        }
-    }
-}
-
-/// <summary>
-/// Tries the primary ASR (cloud GPU) and, if it errors or exceeds its time budget, re-sends the
-/// same audio to the fallback ASR (local faster-whisper) so a call never stalls on the cloud.
-/// </summary>
-public class FallbackAsrClient : IAsrClient
-{
-    private readonly IAsrClient _primary;
-    private readonly IAsrClient _fallback;
-    private readonly TimeSpan _primaryBudget;
-    private readonly TimeSpan _cooldown;
-    private readonly ILogger<FallbackAsrClient> _logger;
-    private long _skipPrimaryUntilTicks;
-
-    /// <param name="cooldown">After the primary fails, go straight to the fallback for this long instead of
-    /// making every sentence wait out the budget again (default 30 s).</param>
-    public FallbackAsrClient(IAsrClient primary, IAsrClient fallback, TimeSpan primaryBudget, ILogger<FallbackAsrClient> logger,
-        TimeSpan? cooldown = null)
-    {
-        _primary = primary;
-        _fallback = fallback;
-        _primaryBudget = primaryBudget;
-        _cooldown = cooldown ?? TimeSpan.FromSeconds(30);
-        _logger = logger;
-    }
-
-    public async Task<AsrResult> AnalyzeAudioAsync(Guid sessionId, Guid segmentId, byte[] audio, string audioFormat = "pcm_s16le", CancellationToken cancellationToken = default)
-    {
-        if (DateTime.UtcNow.Ticks < Interlocked.Read(ref _skipPrimaryUntilTicks))
-        {
-            return await _fallback.AnalyzeAudioAsync(sessionId, segmentId, audio, audioFormat, cancellationToken);
-        }
-
-        using var budget = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
-        budget.CancelAfter(_primaryBudget);
-        try
-        {
-            return await _primary.AnalyzeAudioAsync(sessionId, segmentId, audio, audioFormat, budget.Token);
-        }
-        catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
-        {
-            Interlocked.Exchange(ref _skipPrimaryUntilTicks, DateTime.UtcNow.Add(_cooldown).Ticks);
-            _logger.LogWarning("Primary ASR failed or exceeded {Budget}s for segment {SegmentId} ({Error}); using fallback ASR for the next {Cooldown}s.",
-                _primaryBudget.TotalSeconds, segmentId, ex.Message, _cooldown.TotalSeconds);
-            return await _fallback.AnalyzeAudioAsync(sessionId, segmentId, audio, audioFormat, cancellationToken);
         }
     }
 }

@@ -2,12 +2,10 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
 using ECFD.Application.Alerts;
 using ECFD.Application.Interfaces;
 using ECFD.Application.Risk;
 using ECFD.Application.Progression;
-using ECFD.Infrastructure.Persistence;
 using ECFD.Infrastructure.MLClients;
 using ECFD.Infrastructure.SignalR;
 using ECFD.Api.HostedServices;
@@ -27,12 +25,6 @@ builder.Services.AddSwaggerGen();
 // Add SignalR
 builder.Services.AddSignalR();
 
-// Database (In-Memory default for instant local dev, PostgreSQL configurable via env)
-builder.Services.AddDbContext<EcfdDbContext>(options =>
-{
-    options.UseInMemoryDatabase("EcfdDevDb");
-});
-
 // Register Domain & Application Engines
 builder.Services.AddSingleton<IRiskEngine, RiskEngine>();
 builder.Services.AddSingleton<IAttackProgressionEngine, AttackProgressionEngine>();
@@ -44,7 +36,6 @@ var mlOptions = builder.Configuration.GetSection(MlServicesOptions.SectionName).
 // connection lost about two seconds before falling back - on each rule check, analyst call and warning.
 mlOptions.AsrUrl = Loopback(mlOptions.AsrUrl)!;
 mlOptions.NlpUrl = Loopback(mlOptions.NlpUrl)!;
-mlOptions.AsrFallbackUrl = Loopback(mlOptions.AsrFallbackUrl);
 mlOptions.AnalystUrl = Loopback(mlOptions.AnalystUrl);
 mlOptions.AntiSpoofUrl = Loopback(mlOptions.AntiSpoofUrl);
 if (mlOptions.UseMocks)
@@ -54,28 +45,10 @@ if (mlOptions.UseMocks)
 }
 else
 {
-    // Primary ASR (e.g. Cohere on Modal) with an optional fallback (local faster-whisper) when it fails or is slow.
-    builder.Services.AddHttpClient("asr-primary", c =>
+    builder.Services.AddHttpClient<IAsrClient, HttpAsrClient>(c =>
     {
         c.BaseAddress = new Uri(mlOptions.AsrUrl);
         c.Timeout = TimeSpan.FromSeconds(mlOptions.AsrTimeoutSeconds);
-    });
-    if (!string.IsNullOrWhiteSpace(mlOptions.AsrFallbackUrl))
-    {
-        builder.Services.AddHttpClient("asr-fallback", c =>
-        {
-            c.BaseAddress = new Uri(mlOptions.AsrFallbackUrl);
-            c.Timeout = TimeSpan.FromSeconds(mlOptions.AsrTimeoutSeconds);
-        });
-    }
-    builder.Services.AddTransient<IAsrClient>(sp =>
-    {
-        var factory = sp.GetRequiredService<IHttpClientFactory>();
-        IAsrClient primary = new HttpAsrClient(factory.CreateClient("asr-primary"));
-        if (string.IsNullOrWhiteSpace(mlOptions.AsrFallbackUrl))
-            return primary;
-        return new FallbackAsrClient(primary, new HttpAsrClient(factory.CreateClient("asr-fallback")),
-            TimeSpan.FromSeconds(mlOptions.AsrFallbackAfterSeconds), sp.GetRequiredService<ILogger<FallbackAsrClient>>());
     });
     if (mlOptions.AsrWarmUpOnStart)
         builder.Services.AddHostedService(sp => new AsrWarmUpHostedService(mlOptions.AsrUrl, sp.GetRequiredService<ILogger<AsrWarmUpHostedService>>(),
@@ -147,12 +120,16 @@ else
     builder.Services.AddSingleton<IEmployeeWarner, NoEmployeeWarner>();
 }
 
-// CORS for Frontend SignalR Connection
+// CORS for Frontend SignalR Connection. Cors:AllowedOrigins lists the dashboards' addresses when the dashboard
+// runs on another machine (e.g. ["http://192.168.1.88:3000"]).
+var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() is { Length: > 0 } configured
+    ? configured
+    : new[] { "http://localhost:3000", "http://127.0.0.1:3000" };
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(corsOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();

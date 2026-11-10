@@ -141,36 +141,34 @@ export const CallControls: React.FC<{ callActive: boolean }> = ({ callActive }) 
   };
 
   const inCall = status !== "idle" || callActive;
-  const btn = "px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition disabled:opacity-40 disabled:cursor-not-allowed";
+  const btn = "rounded-md px-4 py-2 text-sm font-medium transition disabled:opacity-40 disabled:cursor-not-allowed";
 
   return (
-    <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 mb-6 flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-3">
       {!inCall ? (
-        <button className={`${btn} bg-sky-600 hover:bg-sky-500 text-white`} onClick={startCall}>
-          Start simulated call
+        <button className={`${btn} bg-ink text-page hover:opacity-90`} onClick={startCall}>
+          Start a test call
         </button>
       ) : (
         <>
           {status === "recording" ? (
-            <button className={`${btn} bg-red-600 hover:bg-red-500 text-white animate-pulse`} onClick={stopRecording}>
-              ■ Stop
+            <button className={`${btn} bg-danger text-page hover:opacity-90`} onClick={stopRecording}>
+              Stop recording
             </button>
           ) : (
             <button
-              className={`${btn} bg-emerald-600 hover:bg-emerald-500 text-white`}
+              className={`${btn} bg-ink text-page hover:opacity-90`}
               onClick={startRecording}
               disabled={status === "processing"}
             >
-              ● Record utterance
+              Record a sentence
             </button>
           )}
-          <div className="flex rounded-lg overflow-hidden border border-slate-700">
+          <div className="flex overflow-hidden rounded-md border border-line text-sm">
             {(["CALLER", "EMPLOYEE"] as Speaker[]).map((s) => (
               <button
                 key={s}
-                className={`px-3 py-2 text-xs font-bold uppercase tracking-wider ${
-                  speaker === s ? (s === "CALLER" ? "bg-rose-700 text-white" : "bg-sky-700 text-white") : "bg-slate-800 text-slate-400"
-                }`}
+                className={`px-3 py-2 ${speaker === s ? "bg-ink text-page" : "bg-surface text-muted hover:text-ink"}`}
                 onClick={() => setSpeaker(s)}
                 disabled={status === "recording"}
               >
@@ -180,19 +178,19 @@ export const CallControls: React.FC<{ callActive: boolean }> = ({ callActive }) 
           </div>
           <input
             dir="auto"
-            className="flex-1 min-w-[220px] bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-sm text-slate-100"
+            className="min-w-[220px] flex-1 rounded-md border border-line bg-surface px-3 py-2 text-sm placeholder:text-faint focus:border-accent focus:outline-none"
             placeholder="…or type a sentence and press Enter"
             value={typed}
             onChange={(e) => setTyped(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && status === "in-call" && sendTyped()}
             disabled={status === "recording"}
           />
-          <button className={`${btn} bg-slate-700 hover:bg-slate-600 text-slate-100`} onClick={endCall}>
+          <button className={`${btn} border border-line bg-surface text-ink hover:bg-page`} onClick={endCall}>
             End call
           </button>
         </>
       )}
-      <span className="text-xs text-slate-400 font-mono" dir="auto">{message}</span>
+      <span className="text-xs text-muted" dir="auto">{message}</span>
     </div>
   );
 };

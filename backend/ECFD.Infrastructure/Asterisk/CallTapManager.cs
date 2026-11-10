@@ -21,6 +21,12 @@ public interface ICallSink
     /// <summary>A finished sentence from one side of the call (16 kHz little-endian PCM).</summary>
     /// <param name="speechEndedAtUtc">When the speaker stopped talking (before the silence that closed the sentence).</param>
     Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, DateTime speechEndedAtUtc, CancellationToken ct);
+    /// <summary>A finished sentence is queued for transcription (before it is transcribed), so the call
+    /// can keep the two speakers' sentences in the order they were spoken.</summary>
+    void OnUtteranceQueued(Guid sessionId, string utteranceId, DateTime speechEndedAtUtc)
+    {
+    }
+
     /// <summary>The sentence spoken so far, for live words on the dashboard. Best effort.</summary>
     Task OnPartialAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, CancellationToken ct);
     /// <summary>A detection was too short to be a sentence: withdraw any live words shown for it.</summary>
@@ -348,7 +354,9 @@ public sealed class CallTapManager : IEmployeeWarner
         {
             Interlocked.Increment(ref _sentencesPending);
             // the segmenter reports a sentence only after the silence that closed it
-            _sentences.Writer.TryWrite((CurrentUtteranceId, pcm, DateTime.UtcNow.AddMilliseconds(-_closingSilenceMs)));
+            var endedAt = DateTime.UtcNow.AddMilliseconds(-_closingSilenceMs);
+            _sink.OnUtteranceQueued(_sessionId, CurrentUtteranceId, endedAt);
+            _sentences.Writer.TryWrite((CurrentUtteranceId, pcm, endedAt));
             _utteranceNo++;
         }
 
