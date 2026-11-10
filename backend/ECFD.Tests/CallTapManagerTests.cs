@@ -70,14 +70,17 @@ public class CallTapManagerTests
         public ConcurrentQueue<(string Speaker, int Ms)> Sentences { get; } = new();
         public ConcurrentQueue<Guid> Ended { get; } = new();
 
-        public Task<Guid> StartCallAsync(string externalCallId, string callerEndpoint, string employeeEndpoint, CancellationToken ct)
+        public string? LastCallerLine { get; private set; }
+
+        public Task<Guid> StartCallAsync(string externalCallId, string callerEndpoint, string employeeEndpoint, string? callerLine, CancellationToken ct)
         {
+            LastCallerLine = callerLine;
             Started.Enqueue((callerEndpoint, employeeEndpoint));
             LastSession = Guid.NewGuid();
             return Task.FromResult(LastSession);
         }
 
-        public Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, CancellationToken ct)
+        public Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, DateTime speechEndedAtUtc, CancellationToken ct)
         {
             Sentences.Enqueue((speaker, DurationMs(pcm16le)));
             return Task.CompletedTask;
@@ -140,6 +143,7 @@ public class CallTapManagerTests
         await _taps.HandleEventAsync(Dial("ANSWER"), CancellationToken.None);
 
         Assert.Equal(("1002", "1001"), Assert.Single(_sink.Started));
+        Assert.Equal("EXTERNAL", _sink.LastCallerLine); // 1002 is not one of the organisation's extensions
         var calls = _ari.Calls.ToList();
         Assert.Contains(calls, c => c.StartsWith("snoop 1696-1 as "));                     // caller's voice
         Assert.Contains(calls, c => c.StartsWith("snoop 1696-2 as "));                     // employee's voice

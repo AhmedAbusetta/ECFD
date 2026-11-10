@@ -47,12 +47,13 @@ public record AnalystResult(
     int Turn, bool Analyzed, int Risk, string Level, bool LevelChanged, int? LlmRisk, int Floor,
     string Stage, string Trend, string EmployeeState, string CallerGoal, string Strategy, string NextLikelyMove,
     string AlertAr, List<string> PolicyViolations, List<AnalystEvidence> Evidence, List<string> HardSignals,
-    List<string> Reasons, string Model, int LatencyMs, string? Error);
+    List<string> Reasons, string Model, int LatencyMs, string? Error, bool RuleFlagValid = true);
 
 public interface IAnalystClient
 {
     /// <summary>Send one finished turn; returns null when the analyst is disabled.</summary>
-    Task<AnalystResult?> AnalyzeTurnAsync(Guid sessionId, string speaker, string text, CancellationToken cancellationToken = default);
+    /// <param name="callerLine">EXTERNAL or INTERNAL when the phone system knows where the caller's line is.</param>
+    Task<AnalystResult?> AnalyzeTurnAsync(Guid sessionId, string speaker, string text, string? callerLine = null, CancellationToken cancellationToken = default);
     Task EndCallAsync(Guid sessionId, CancellationToken cancellationToken = default);
 }
 
@@ -64,7 +65,8 @@ public interface ISignalRNotifier
     Task NotifyCallStartedAsync(CallSession session);
     Task NotifyTranscriptFinalAsync(Guid sessionId, TranscriptSegment segment);
     /// <summary>Live text while the speaker is still talking; replaced by the final segment. Empty text clears it.</summary>
-    Task NotifyTranscriptPartialAsync(Guid sessionId, string utteranceId, string speaker, string text);
+    /// <param name="parts">The same text split into confirmed words and guesses; null clears the live text.</param>
+    Task NotifyTranscriptPartialAsync(Guid sessionId, string utteranceId, string speaker, string text, IReadOnlyList<ECFD.Application.Audio.LiveTextPart>? parts = null);
     Task NotifyTacticDetectedAsync(Guid sessionId, Evidence evidence);
     Task NotifyStageChangedAsync(Guid sessionId, AttackStage previousStage, AttackStage newStage, string trigger);
     Task NotifyRiskUpdatedAsync(Guid sessionId, RiskResult risk);
@@ -73,6 +75,6 @@ public interface ISignalRNotifier
     /// <summary>Voice anti-spoofing result for the caller (per sentence and for the whole call).</summary>
     Task NotifyVoiceUpdatedAsync(Guid sessionId, VoiceUpdate update);
     /// <summary>A spoken warning was played into the employee's ear (kind: otp, secret, payment, ...).</summary>
-    Task NotifyEmployeeWarnedAsync(Guid sessionId, string kind);
+    Task NotifyEmployeeWarnedAsync(Guid sessionId, string kind, int? delayMs = null);
     Task NotifyCallEndedAsync(Guid sessionId);
 }

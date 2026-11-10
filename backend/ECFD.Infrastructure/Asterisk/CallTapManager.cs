@@ -16,9 +16,11 @@ namespace ECFD.Infrastructure.Asterisk;
 /// <summary>Where a tapped call's sentences go (implemented by the API's call pipeline).</summary>
 public interface ICallSink
 {
-    Task<Guid> StartCallAsync(string externalCallId, string callerEndpoint, string employeeEndpoint, CancellationToken ct);
+    /// <param name="callerLine">EXTERNAL or INTERNAL: whether the caller's line belongs to the organisation.</param>
+    Task<Guid> StartCallAsync(string externalCallId, string callerEndpoint, string employeeEndpoint, string? callerLine, CancellationToken ct);
     /// <summary>A finished sentence from one side of the call (16 kHz little-endian PCM).</summary>
-    Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, CancellationToken ct);
+    /// <param name="speechEndedAtUtc">When the speaker stopped talking (before the silence that closed the sentence).</param>
+    Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, DateTime speechEndedAtUtc, CancellationToken ct);
     /// <summary>The sentence spoken so far, for live words on the dashboard. Best effort.</summary>
     Task OnPartialAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, CancellationToken ct);
     /// <summary>A detection was too short to be a sentence: withdraw any live words shown for it.</summary>
@@ -155,10 +157,11 @@ public sealed class CallTapManager : IEmployeeWarner
             bool bIsEmployee = _options.Employees.Contains(b.Value.Ext);
             var (callerLeg, employeeLeg) = aIsEmployee && !bIsEmployee ? (b.Value, a.Value) : (a.Value, b.Value);
 
-            var sessionId = await _sink.StartCallAsync($"PBX-{callerLeg.Id}", callerLeg.Ext, employeeLeg.Ext, ct);
+            var callerLine = _options.IsInternal(callerLeg.Ext) ? "INTERNAL" : "EXTERNAL";
+            var sessionId = await _sink.StartCallAsync($"PBX-{callerLeg.Id}", callerLeg.Ext, employeeLeg.Ext, callerLine, ct);
             var call = new TappedCall(sessionId);
-            _logger.LogInformation("Call answered: caller {Caller} -> employee {Employee}; tapping both sides.",
-                callerLeg.Ext, employeeLeg.Ext);
+            _logger.LogInformation("Call answered: caller {Caller} ({Line} line) -> employee {Employee}; tapping both sides.",
+                callerLeg.Ext, callerLine, employeeLeg.Ext);
 
             foreach (var (leg, speaker) in new[] { (callerLeg, "CALLER"), (employeeLeg, "EMPLOYEE") })
             {
@@ -303,7 +306,9 @@ public sealed class CallTapManager : IEmployeeWarner
         private readonly ILogger _logger;
         private readonly UtteranceSegmenter _segmenter;
         // Pcm == null: the detection was discarded (too short) - only its live words need clearing
-        private readonly Channel<(string Id, byte[]? Pcm)> _sentences = Channel.CreateUnbounded<(string, byte[]?)>();
+        private readonly Channel<(string Id, byte[]? Pcm, DateTime SpeechEndedAt)> _sentences =
+            Channel.CreateUnbounded<(string, byte[]?, DateTime)>();
+        private readonly int _closingSilenceMs;
         private readonly Task _worker;
         private int _utteranceNo = 1;
         private int _partialBusy;
@@ -322,6 +327,7 @@ public sealed class CallTapManager : IEmployeeWarner
             _sink = sink;
             _logger = logger;
             _segmenter = new UtteranceSegmenter(segmenter, OnSentence, OnPartial, OnDiscarded);
+            _closingSilenceMs = segmenter.SilenceToCloseMs;
             _worker = Task.Run(ProcessSentencesAsync);
         }
 
@@ -341,13 +347,14 @@ public sealed class CallTapManager : IEmployeeWarner
         private void OnSentence(byte[] pcm)
         {
             Interlocked.Increment(ref _sentencesPending);
-            _sentences.Writer.TryWrite((CurrentUtteranceId, pcm));
+            // the segmenter reports a sentence only after the silence that closed it
+            _sentences.Writer.TryWrite((CurrentUtteranceId, pcm, DateTime.UtcNow.AddMilliseconds(-_closingSilenceMs)));
             _utteranceNo++;
         }
 
         private void OnDiscarded()
         {
-            _sentences.Writer.TryWrite((CurrentUtteranceId, null));
+            _sentences.Writer.TryWrite((CurrentUtteranceId, null, DateTime.UtcNow));
             _utteranceNo++;
         }
 
@@ -383,7 +390,7 @@ public sealed class CallTapManager : IEmployeeWarner
 
         private async Task ProcessSentencesAsync()
         {
-            await foreach (var (id, pcm) in _sentences.Reader.ReadAllAsync())
+            await foreach (var (id, pcm, speechEndedAt) in _sentences.Reader.ReadAllAsync())
             {
                 try
                 {
@@ -393,7 +400,7 @@ public sealed class CallTapManager : IEmployeeWarner
                     }
                     else
                     {
-                        await _sink.OnUtteranceAsync(_sessionId, Speaker, id, pcm, CancellationToken.None);
+                        await _sink.OnUtteranceAsync(_sessionId, Speaker, id, pcm, speechEndedAt, CancellationToken.None);
                     }
                 }
                 catch (Exception ex)

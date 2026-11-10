@@ -25,8 +25,8 @@ public static class EmployeeWarnings
     public const string Secret = "secret";               // password, PIN, card number, CVV
     public const string Payment = "payment";             // transfer money, "safe account"
     public const string Remote = "remote";               // install a remote-control app
-    public const string Impersonation = "impersonation"; // pretends to be the bank / management
-    public const string Pressure = "pressure";           // urgency, secrecy
+    public const string Impersonation = "impersonation"; // recorded ("may be impersonating the bank"), not played for now
+    public const string Pressure = "pressure";           // recorded, but no longer played: pressure alone proves nothing
     public const string General = "general";
 
     public static readonly IReadOnlyList<string> All = new[] { Otp, Secret, Payment, Remote, Impersonation, Pressure, General };
@@ -34,7 +34,8 @@ public static class EmployeeWarnings
     /// <summary>
     /// The most specific warning for what the caller is doing. The analyst's hard signals
     /// ("SECRET/OTP: ...", "PAYMENT/PAYMENT: ...") name the exact request, so the newest one wins;
-    /// otherwise the strongest rules evidence seen on the call decides.
+    /// otherwise the strongest request the rules saw on the call decides. Urgency, authority or secrecy never
+    /// choose a warning: honest callers use them too, so on their own they only get the general reminder.
     /// </summary>
     public static string Pick(IEnumerable<string>? hardSignals, IEnumerable<EvidenceType>? evidence)
     {
@@ -52,8 +53,6 @@ public static class EmployeeWarnings
         if (seen.Contains(EvidenceType.CredentialRequest)) return Secret;
         if (seen.Contains(EvidenceType.PaymentRequest) || seen.Contains(EvidenceType.VerificationBypass)) return Payment;
         if (seen.Contains(EvidenceType.RemoteAccess)) return Remote;
-        if (seen.Contains(EvidenceType.Authority)) return Impersonation;
-        if (seen.Contains(EvidenceType.Urgency) || seen.Contains(EvidenceType.Secrecy)) return Pressure;
         return General;
     }
 
@@ -69,6 +68,9 @@ public static class EmployeeWarnings
             "SECRET" => Secret,
             "PAYMENT" or "BYPASS" => Payment,
             "REMOTE" => Remote,
+            // "I'm from IT" on an outside line: the recorded impersonation warning names the bank, which would be
+            // wrong here, so the general warning plays until a sentence for this case is recorded
+            "IMPERSONATION" => General,
             _ => null
         };
     }

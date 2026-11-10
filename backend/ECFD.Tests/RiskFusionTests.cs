@@ -30,6 +30,23 @@ public class RiskFusionTests
         Assert.DoesNotContain(fused.TopContributors, c => c.Type == RiskFusion.AnalystContributor);
     }
 
+    [Fact]
+    public void A_Forbidden_Request_Holds_The_Risk_Up_Before_The_Analyst_Answers()
+    {
+        var fused = RiskFusion.Fuse(Rules(53), 0, AttackStage.CredentialExtraction, RiskFusion.ForbiddenRequestFloor);
+
+        Assert.Equal(80, fused.Score);
+        Assert.Equal(RiskSeverity.Critical, fused.Severity);
+        Assert.Equal(RiskFusion.ForbiddenRequestContributor, fused.TopContributors[0].Type);
+    }
+
+    [Fact]
+    public void The_Floor_Never_Lowers_A_Higher_Score()
+    {
+        Assert.Equal(92, RiskFusion.Fuse(Rules(53), 92, AttackStage.CredentialExtraction, RiskFusion.ForbiddenRequestFloor).Score);
+        Assert.Equal(95, RiskFusion.Fuse(Rules(95), 0, AttackStage.CredentialExtraction, RiskFusion.ForbiddenRequestFloor).Score);
+    }
+
     [Theory]
     [InlineData(AttackStage.IdentityClaim, "CredentialExtraction", true, AttackStage.CredentialExtraction)]
     [InlineData(AttackStage.CredentialExtraction, "Pressure", false, AttackStage.CredentialExtraction)] // never backwards

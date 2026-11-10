@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using ECFD.Application.Alerts;
+using ECFD.Application.Audio;
 using ECFD.Application.Interfaces;
 using ECFD.Application.Risk;
 using ECFD.Application.Voice;
@@ -35,16 +36,20 @@ public class CallPipeline
     private readonly IAttackProgressionEngine _progressionEngine;
     private readonly IRiskEngine _riskEngine;
     private readonly ILogger<CallPipeline> _logger;
+    private readonly CallLogStore? _callLog;
 
     private readonly ConcurrentDictionary<Guid, CallSession> _active = new();
     // Utterances whose final transcription has started: a late live (partial) result must not overwrite it.
     private readonly ConcurrentDictionary<string, byte> _finalizedUtterances = new();
     // Anti-spoofing scores of each call's caller sentences, combined into one call-level score.
     private readonly ConcurrentDictionary<Guid, VoiceSpoofTracker> _voice = new();
+    // Per sentence being spoken: which live words are confirmed, so they stop changing on screen.
+    private readonly ConcurrentDictionary<string, LiveTextStabilizer> _liveText = new();
 
     public CallPipeline(IServiceProvider services, ISignalRNotifier notifier, IAttackProgressionEngine progressionEngine,
-        IRiskEngine riskEngine, ILogger<CallPipeline> logger)
+        IRiskEngine riskEngine, ILogger<CallPipeline> logger, CallLogStore? callLog = null)
     {
+        _callLog = callLog;
         _services = services;
         _notifier = notifier;
         _progressionEngine = progressionEngine;
@@ -61,7 +66,7 @@ public class CallPipeline
     private IEmployeeWarner? Warner => _services.GetService<IEmployeeWarner>();
 
     /// <summary>On a PBX call, speak the fitting warning into the employee's ear. Never blocks or fails the turn.</summary>
-    private void WarnEmployee(CallSession session, IEnumerable<string>? hardSignals)
+    private void WarnEmployee(CallSession session, IEnumerable<string>? hardSignals, TranscriptSegment? trigger = null)
     {
         var warner = Warner;
         if (warner == null)
@@ -80,7 +85,15 @@ public class CallPipeline
             {
                 if (await warner.WarnEmployeeAsync(session.Id, kind))
                 {
-                    await _notifier.NotifyEmployeeWarnedAsync(session.Id, kind);
+                    // how long after the caller's sentence ended the employee started hearing the warning
+                    int? delayMs = trigger?.SpeechEndedAt is { } ended ? (int)(DateTime.UtcNow - ended).TotalMilliseconds : null;
+                    lock (session)
+                    {
+                        session.Warnings.Add(new EmployeeWarningRecord(kind, delayMs, DateTime.UtcNow));
+                    }
+                    _logger.LogInformation("Employee warned ({Kind}) {Delay} ms after the caller's sentence ended.",
+                        kind, delayMs?.ToString() ?? "?");
+                    await _notifier.NotifyEmployeeWarnedAsync(session.Id, kind, delayMs);
                 }
             }
             catch (Exception ex)
@@ -93,13 +106,15 @@ public class CallPipeline
     public static string SpeakerOf(string? speaker) =>
         string.Equals(speaker?.Trim(), "EMPLOYEE", StringComparison.OrdinalIgnoreCase) ? "EMPLOYEE" : "CALLER";
 
-    public async Task<CallSession> StartCallAsync(string externalCallId, string callerEndpoint, string calleeEndpoint)
+    public async Task<CallSession> StartCallAsync(string externalCallId, string callerEndpoint, string calleeEndpoint,
+        string? callerLine = null)
     {
         var session = new CallSession
         {
             ExternalCallId = externalCallId,
             CallerEndpoint = callerEndpoint,
             CalleeEndpoint = calleeEndpoint,
+            CallerLine = callerLine,
             Status = CallStatus.Analyzing
         };
         _active[session.Id] = session;
@@ -122,7 +137,13 @@ public class CallPipeline
             session.Status = CallStatus.Ended;
             session.EndedAt = DateTime.UtcNow;
         }
-        _voice.TryRemove(sessionId, out _);
+        var voiceScore = _voice.TryRemove(sessionId, out var tracker) ? tracker.CallScore : null;
+        if (_active.IsEmpty)
+        {
+            _finalizedUtterances.Clear(); // only needed while a call's late live results can still arrive
+            _liveText.Clear();
+        }
+        _callLog?.Save(session, voiceScore);
         await _notifier.NotifyCallEndedAsync(sessionId);
         _ = Analyst.EndCallAsync(sessionId).ContinueWith(
             t => _logger.LogDebug("Analyst end-call failed: {Error}", t.Exception?.GetBaseException().Message),
@@ -194,7 +215,7 @@ public class CallPipeline
                 session.EvidenceList.Add(added);
             }
             var rules = _riskEngine.Calculate(session.EvidenceList.ToList(), session.CurrentStage);
-            fused = RiskFusion.Fuse(rules, session.AnalystRisk, session.CurrentStage);
+            fused = RiskFusion.Fuse(rules, session.AnalystRisk, session.CurrentStage, session.RequestFloor);
             session.CurrentRisk = fused.Score;
         }
         _logger.LogWarning("Caller voice suspected synthetic in call {Session} (score {Score:F2} over {Count} sentences)",
@@ -227,12 +248,25 @@ public class CallPipeline
         {
             return false;
         }
-        await _notifier.NotifyTranscriptPartialAsync(session.Id, utteranceId ?? "", speaker, text);
+        var parts = _liveText.GetOrAdd(utteranceId ?? "", _ => new LiveTextStabilizer()).Update(text);
+        if (IsFinalized(utteranceId))
+        {
+            _liveText.TryRemove(utteranceId ?? "", out _);
+            return false;
+        }
+        await _notifier.NotifyTranscriptPartialAsync(session.Id, utteranceId ?? "", speaker,
+            string.Join(" ", parts.Select(p => p.Text)), parts);
         return true;
     }
 
-    public Task ClearPartialAsync(CallSession session, string? utteranceId, string speaker) =>
-        _notifier.NotifyTranscriptPartialAsync(session.Id, utteranceId ?? "", speaker, "");
+    public Task ClearPartialAsync(CallSession session, string? utteranceId, string speaker)
+    {
+        _liveText.TryRemove(utteranceId ?? "", out _);
+        return _notifier.NotifyTranscriptPartialAsync(session.Id, utteranceId ?? "", speaker, "");
+    }
+
+    /// <summary>The sentence is finished: its live words are no longer needed.</summary>
+    public void ForgetLiveText(string? utteranceId) => _liveText.TryRemove(utteranceId ?? "", out _);
 
     public async Task<TurnResult> AnalyzeSegmentAsync(CallSession session, TranscriptSegment segment)
     {
@@ -294,21 +328,31 @@ public class CallPipeline
         // Risk: rules, fused with the analyst's latest view of the call
         RiskResult riskResult;
         Alert? alert = null;
+        // The instant rules only fire on a request that is wrong from anyone (a code, a password, remote control...),
+        // so the employee is warned now instead of after the analyst's answer, which applies the same rule later.
+        bool forbiddenRequest = tactics.Any(t => EvidenceTypeLabels.TryParse(t.Type, out var type) && type is
+            EvidenceType.OtpRequest or EvidenceType.CredentialRequest or EvidenceType.PaymentRequest
+            or EvidenceType.VerificationBypass or EvidenceType.RemoteAccess);
         lock (session)
         {
+            if (forbiddenRequest)
+            {
+                session.RequestFloor = RiskFusion.ForbiddenRequestFloor;
+            }
             var rules = _riskEngine.Calculate(session.EvidenceList.ToList(), session.CurrentStage);
-            riskResult = RiskFusion.Fuse(rules, session.AnalystRisk, session.CurrentStage);
+            riskResult = RiskFusion.Fuse(rules, session.AnalystRisk, session.CurrentStage, session.RequestFloor);
             session.CurrentRisk = riskResult.Score;
+            session.PeakRisk = Math.Max(session.PeakRisk, riskResult.Score);
 
             // One rules-based Critical alert per call (not one per utterance once the score is high)
-            if (rules.Severity == RiskSeverity.Critical && !session.Alerts.Any(a => a.Title == RulesAlertTitle))
+            if (riskResult.Severity == RiskSeverity.Critical && rules.Score > 0 && !session.Alerts.Any(a => a.Title == RulesAlertTitle))
             {
                 alert = new Alert
                 {
                     CallSessionId = session.Id,
                     Severity = RiskSeverity.Critical,
                     Title = RulesAlertTitle,
-                    Description = "High confidence credential extraction attempt detected."
+                    Description = "The caller asked for something no legitimate caller asks for by phone."
                 };
                 session.Alerts.Add(alert);
             }
@@ -317,7 +361,10 @@ public class CallPipeline
         if (alert != null)
         {
             await _notifier.NotifyAlertRaisedAsync(session.Id, alert);
-            WarnEmployee(session, null);
+        }
+        if (alert != null || forbiddenRequest)
+        {
+            WarnEmployee(session, null, segment);
         }
 
         return new TurnResult(session.Id, segment.Text, segment.Speaker, segment.ModelVersion, segment.Confidence,
@@ -328,7 +375,7 @@ public class CallPipeline
     {
         try
         {
-            var result = await Analyst.AnalyzeTurnAsync(session.Id, segment.Speaker, segment.Text);
+            var result = await Analyst.AnalyzeTurnAsync(session.Id, segment.Speaker, segment.Text, session.CallerLine);
             if (result == null)
             {
                 return; // analyst disabled
@@ -346,9 +393,21 @@ public class CallPipeline
                 stageAdvanced = RiskFusion.TryAdvanceStage(session.CurrentStage, result.Stage, out var next);
                 session.CurrentStage = next;
                 session.AnalystRisk = result.Risk;
+                if (!result.RuleFlagValid)
+                {
+                    // the instant rule matched words that are not a real request (negated, quoted, advice):
+                    // take back what that sentence added, unless another sentence still holds a real request
+                    session.EvidenceList.RemoveAll(e => e.TranscriptSegmentId == segment.Id);
+                    if (!session.EvidenceList.Any(e => e.Type is EvidenceType.OtpRequest or EvidenceType.CredentialRequest
+                            or EvidenceType.PaymentRequest or EvidenceType.VerificationBypass or EvidenceType.RemoteAccess))
+                    {
+                        session.RequestFloor = 0;
+                    }
+                }
                 var rules = _riskEngine.Calculate(session.EvidenceList.ToList(), session.CurrentStage);
-                fused = RiskFusion.Fuse(rules, session.AnalystRisk, session.CurrentStage);
+                fused = RiskFusion.Fuse(rules, session.AnalystRisk, session.CurrentStage, session.RequestFloor);
                 session.CurrentRisk = fused.Score;
+                session.PeakRisk = Math.Max(session.PeakRisk, fused.Score);
 
                 if (result.Level == "ALERT" && !session.Alerts.Any(a => a.Title == AnalystAlertTitle))
                 {
@@ -377,7 +436,7 @@ public class CallPipeline
             {
                 // every ALERT turn: a new, more specific request (e.g. the OTP after a general alert) gets
                 // its own warning; the warner plays each kind once and caps warnings per call
-                WarnEmployee(session, result.HardSignals);
+                WarnEmployee(session, result.HardSignals, segment);
             }
         }
         catch (Exception ex)

@@ -1,23 +1,39 @@
 """
-ECFD NLP / Conversational Intelligence Microservice
-FastAPI service providing multi-label social engineering tactic classification on transcript utterances.
+ECFD instant request check (the backend's fast, deterministic rules).
+
+Answers one narrow question per CALLER sentence within milliseconds: did the caller just ask for
+something no legitimate caller asks for by phone? It uses the same hard-signal rules as the AI call
+analyst's floor (ml/brain/ecfd_brain/floor.py): a request verb + a secret ("اديني الكود"), a payment verb
++ money, a remote-control app, or a verification-bypass phrase. Single words ("كود", "لازم", "البنك")
+never count on their own - judging the conversation in context is the analyst's job (ADR-0005).
 """
 
-import os
-import re
+import sys
 import time
+from pathlib import Path
 from typing import List, Optional
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 
+# the rules live with the analyst so the live system and the offline tests can never drift apart
+for _brain in (Path(__file__).resolve().parents[1] / "brain", Path(__file__).resolve().parent / "brain"):
+    if (_brain / "ecfd_brain").is_dir():
+        sys.path.insert(0, str(_brain))
+        break
+
+from ecfd_brain.floor import HardSignalFloor  # noqa: E402
+
 app = FastAPI(
-    title="ECFD NLP Microservice",
-    description="Multi-label conversational fraud tactic classifier",
-    version="1.0.0"
+    title="ECFD instant request check",
+    description="Deterministic hard-signal rules on one caller sentence",
+    version="2.0.0"
 )
 
-USE_MOCK = os.getenv("ML_USE_MOCK_MODE", "true").lower() == "true"
-MODEL_NAME = os.getenv("NLP_MODEL_NAME", "UBC-NLP/MARBERT")
+MODEL_VERSION = "hard-signal-floor-v1"
+CONFIDENCE = 0.95
+OTP_CONCEPTS = {"OTP"}
+floor = HardSignalFloor()
 
 
 class TacticMatch(BaseModel):
@@ -39,63 +55,34 @@ class NlpResponse(BaseModel):
     inferenceDurationMs: float
 
 
-# Rule-based tactic matching dictionary (serves as immediate robust baseline)
-RULES = {
-    # A claimed identity is context, not proof of fraud (ADR-0004); the backend weighs it
-    # by what the caller asks for afterwards.
-    "IDENTITY_CLAIM": ["IT", "الدعم الفني", "البنك", "خدمة العملاء", "المرور", "الضرائب", "أنا فلان", "أنا من"],
-    "AUTHORITY": ["لازم", "قرار", "إيقاف الحساب", "تعليمات الإدارة", "أمر مباشر", "مخالفة"],
-    "URGENCY": ["حالاً", "دلوقتي", "بسرعة", "قبل ما يقفل", "في خلال دقائق", "مشكلة فورية", "عاجل"],
-    "OTP_REQUEST": ["كود", "رمز", "otp", "الرسالة اللي جاتلك", "ست أرقام", "ارقام التحقق"],
-    "CREDENTIAL_REQUEST": ["الباسورد", "كلمة السر", "الرقم السري", "pin", "بيانات الكارت", "cvv"],
-    "PAYMENT_REQUEST": ["تحويل", "فودافون كاش", "instapay", "انستاباي", "فلوس", "رسوم"],
-    "REMOTE_ACCESS": ["anydesk", "teamviewer", "برنامج التحكم", "نزل البرنامج", "افتح اللينك"],
-    "SECRECY": ["ما تقولش لحد", "بيننا", "سري", "ماتقفلش الخط", "ماتكلمش الفرع"],
-    "VERIFICATION_BYPASS": ["تخطي", "مش لازم تروح الفرع", "انا هعملهالك من هنا", "تأكيد يدوي"],
-    "SENSITIVE_ACTION": ["اضغط موافق", "وافق على الرسالة", "اكد العملية", "اقبل الطلب"]
-}
-
-
-def _contains(text: str, kw: str) -> bool:
-    # Latin keywords must match whole words, otherwise "pin" fires on "shipping".
-    # All-caps acronyms ("IT") match case-sensitively so the pronoun "it" does not count.
-    # Arabic keywords keep substring matching so attached prefixes like "ال" / "و" still match.
-    if kw.isascii():
-        flags = 0 if kw.isupper() else re.IGNORECASE
-        return re.search(rf"(?<![A-Za-z0-9]){re.escape(kw)}(?![A-Za-z0-9])", text, flags) is not None
-    return kw in text.lower()
+def _label(kind: str, concept: str) -> str:
+    if kind == "SECRET":
+        return "OTP_REQUEST" if concept in OTP_CONCEPTS else "CREDENTIAL_REQUEST"
+    return {"PAYMENT": "PAYMENT_REQUEST", "REMOTE": "REMOTE_ACCESS", "BYPASS": "VERIFICATION_BYPASS"}[kind]
 
 
 def rule_match(text: str) -> List[TacticMatch]:
-    matches = []
-    for tactic, keywords in RULES.items():
-        for kw in keywords:
-            if _contains(text, kw):
-                matches.append(TacticMatch(type=tactic, confidence=0.92))
-                break
-    return matches
+    """Tactics for one CALLER sentence (the backend only sends caller sentences)."""
+    labels = []
+    for signal in floor.check(text, "CALLER"):
+        label = _label(signal.kind, signal.concept)
+        if label not in labels:
+            labels.append(label)
+    return [TacticMatch(type=label, confidence=CONFIDENCE) for label in labels]
 
 
 @app.get("/health")
 def health():
-    return {
-        "status": "HEALTHY",
-        "service": "nlp",
-        "mockMode": USE_MOCK,
-        "model": MODEL_NAME
-    }
+    return {"status": "HEALTHY", "service": "nlp", "mockMode": False, "model": MODEL_VERSION}
 
 
 @app.post("/v1/nlp/analyze", response_model=NlpResponse)
 def analyze_text(req: NlpRequest):
     start_time = time.time()
-    
-    # Run rule baseline / mock matching
     tactics = rule_match(req.text)
-    
     return NlpResponse(
         segmentId=req.segmentId,
         tactics=tactics,
-        modelVersion=f"{MODEL_NAME}-rule-baseline",
+        modelVersion=MODEL_VERSION,
         inferenceDurationMs=round((time.time() - start_time) * 1000, 2)
     )

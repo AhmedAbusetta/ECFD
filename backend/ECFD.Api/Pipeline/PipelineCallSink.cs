@@ -1,6 +1,8 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Logging;
+using ECFD.Application.Audio;
 using ECFD.Application.Interfaces;
 using ECFD.Domain.Entities;
 using ECFD.Infrastructure.Asterisk;
@@ -14,19 +16,21 @@ public class PipelineCallSink : ICallSink
     private const string PcmFormat = "pcm_s16le";
 
     private readonly CallPipeline _pipeline;
+    private readonly ILogger<PipelineCallSink> _logger;
 
-    public PipelineCallSink(CallPipeline pipeline)
+    public PipelineCallSink(CallPipeline pipeline, ILogger<PipelineCallSink> logger)
     {
         _pipeline = pipeline;
+        _logger = logger;
     }
 
-    public async Task<Guid> StartCallAsync(string externalCallId, string callerEndpoint, string employeeEndpoint, CancellationToken ct)
+    public async Task<Guid> StartCallAsync(string externalCallId, string callerEndpoint, string employeeEndpoint, string? callerLine, CancellationToken ct)
     {
-        var session = await _pipeline.StartCallAsync(externalCallId, $"{callerEndpoint} (caller)", $"{employeeEndpoint} (employee)");
+        var session = await _pipeline.StartCallAsync(externalCallId, $"{callerEndpoint} (caller)", $"{employeeEndpoint} (employee)", callerLine);
         return session.Id;
     }
 
-    public async Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, CancellationToken ct)
+    public async Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, DateTime speechEndedAtUtc, CancellationToken ct)
     {
         var session = _pipeline.Get(sessionId);
         if (session == null)
@@ -39,6 +43,8 @@ public class PipelineCallSink : ICallSink
             _pipeline.AnalyzeVoiceInBackground(session, pcm16le); // is this a real human voice?
         }
         AsrResult asr;
+        var waited = DateTime.UtcNow - speechEndedAtUtc; // closing silence + time behind earlier sentences
+        var started = DateTime.UtcNow;
         try
         {
             asr = await _pipeline.TranscribeAsync(session, pcm16le, PcmFormat, ct);
@@ -48,11 +54,16 @@ public class PipelineCallSink : ICallSink
             await _pipeline.ClearPartialAsync(session, utteranceId, speaker);
             throw;
         }
-        if (string.IsNullOrWhiteSpace(asr.Text))
+        // a click or line noise: the speech model invents words for those, and invented words must not be analysed
+        if (TranscriptGuard.LooksInvented(asr.Text, asr.Confidence, pcm16le.Length / 32))
         {
             await _pipeline.ClearPartialAsync(session, utteranceId, speaker);
             return;
         }
+        _pipeline.ForgetLiveText(utteranceId);
+        // where the time between "stopped talking" and "text on screen" goes, per sentence
+        _logger.LogInformation("{Speaker} sentence ({Audio:F1} s): waited {Waited} ms, speech-to-text {Asr} ms.",
+            speaker, pcm16le.Length / 32000.0, (int)waited.TotalMilliseconds, (int)(DateTime.UtcNow - started).TotalMilliseconds);
 
         await _pipeline.AnalyzeSegmentAsync(session, new TranscriptSegment
         {
@@ -63,7 +74,8 @@ public class PipelineCallSink : ICallSink
             StartMs = asr.StartMs,
             EndMs = asr.EndMs,
             ModelVersion = asr.ModelVersion,
-            Speaker = speaker
+            Speaker = speaker,
+            SpeechEndedAt = speechEndedAtUtc
         });
     }
 

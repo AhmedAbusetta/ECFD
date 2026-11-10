@@ -6,9 +6,9 @@ import { signalRService } from "@/services/signalrService";
 import { CallSession, TranscriptSegment, TranscriptPartial, TacticEvidence, RiskContributor, AlertEvent, AnalystUpdate, VoiceUpdate, EmployeeWarning } from "@/types";
 import { RiskGauge } from "./RiskGauge";
 import { LiveTranscript } from "./LiveTranscript";
+import { VerdictBanner } from "./VerdictBanner";
 import { AttackTimeline } from "./AttackTimeline";
 import { TacticList } from "./TacticList";
-import { AlertPanel } from "./AlertPanel";
 import { CallControls } from "./CallControls";
 import { AnalystPanel } from "./AnalystPanel";
 import { VoicePanel } from "./VoicePanel";
@@ -17,7 +17,12 @@ import { EmployeeWarnings } from "./EmployeeWarnings";
 export const Dashboard: React.FC = () => {
   const [session, setSession] = useState<CallSession | null>(null);
   const [transcripts, setTranscripts] = useState<TranscriptSegment[]>([]);
-  const [partial, setPartial] = useState<TranscriptPartial | null>(null);
+  // the sentence each side is speaking right now; one slot per speaker so they never overwrite each other
+  const [partials, setPartials] = useState<Record<string, TranscriptPartial>>({});
+  // every hard signal the analyst reported on this call (it only sends the newest turn's)
+  const [hardSignals, setHardSignals] = useState<string[]>([]);
+  // the call the panels still describe after it ended, so its verdict stays readable
+  const [shownSession, setShownSession] = useState<CallSession | null>(null);
   const [tactics, setTactics] = useState<TacticEvidence[]>([]);
   const [riskScore, setRiskScore] = useState<number>(0);
   const [severity, setSeverity] = useState<string>("Low");
@@ -34,8 +39,10 @@ export const Dashboard: React.FC = () => {
     signalRService.startConnection(
       (data) => {
         setSession(data);
+        setShownSession(data);
         setTranscripts([]);
-        setPartial(null);
+        setPartials({});
+        setHardSignals([]);
         setTactics([]);
         setRiskScore(0);
         setSeverity("Low");
@@ -48,7 +55,12 @@ export const Dashboard: React.FC = () => {
         setWarnings([]);
       },
       (data) => {
-        setPartial(null);
+        // the finished sentence replaces that speaker's live words only
+        setPartials((prev) => {
+          const next = { ...prev };
+          delete next[data.speaker ?? "CALLER"];
+          return next;
+        });
         setTranscripts((prev) => [...prev, data]);
         setAnalystPending((n) => n + 1);
       },
@@ -66,9 +78,19 @@ export const Dashboard: React.FC = () => {
       },
       (data) => {
         setAnalyst(data);
+        if (data.hardSignals?.length) {
+          setHardSignals((prev) => [...prev, ...data.hardSignals.filter((s: string) => !prev.includes(s))]);
+        }
         setAnalystPending((n) => Math.max(0, n - 1));
       },
-      (data: TranscriptPartial) => setPartial(data.text ? data : null),
+      (data: TranscriptPartial) =>
+        setPartials((prev) => {
+          const next = { ...prev };
+          if (data.text) next[data.speaker] = data;
+          // an empty text clears the live words, but only of the sentence it belongs to
+          else if (next[data.speaker]?.utteranceId === data.utteranceId) delete next[data.speaker];
+          return next;
+        }),
       (data: VoiceUpdate) => setVoice(data),
       (data: EmployeeWarning) => setWarnings((prev) => [...prev, data])
     );
@@ -101,8 +123,18 @@ export const Dashboard: React.FC = () => {
 
       <CallControls callActive={session !== null} />
 
-      {/* Main Grid */}
-      <AlertPanel alerts={alerts} />
+      <VerdictBanner
+        session={shownSession}
+        ended={session === null}
+        riskScore={riskScore}
+        analyst={analyst}
+        analystPending={analystPending}
+        tactics={tactics}
+        hardSignals={hardSignals}
+        voice={voice}
+        warnings={warnings}
+      />
+
 
       <EmployeeWarnings warnings={warnings} />
 
@@ -113,7 +145,7 @@ export const Dashboard: React.FC = () => {
           <RiskGauge score={riskScore} severity={severity} stage={stage} contributors={contributors} />
         </div>
         <div className="lg:col-span-2">
-          <LiveTranscript segments={transcripts} partial={partial} />
+          <LiveTranscript segments={transcripts} partials={Object.values(partials)} />
         </div>
         <div className="lg:col-span-1">
           <VoicePanel voice={voice} callActive={session !== null} />

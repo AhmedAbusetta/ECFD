@@ -3,6 +3,8 @@ export interface CallSession {
   externalCallId: string;
   caller: string;
   callee: string;
+  /** Where the phone system says the caller's line is; null for simulated calls. */
+  callerLine?: "EXTERNAL" | "INTERNAL" | null;
   startedAt: string;
 }
 
@@ -23,6 +25,8 @@ export interface TranscriptPartial {
   utteranceId: string;
   speaker: "CALLER" | "EMPLOYEE";
   text: string;
+  /** The same text as runs of confirmed words (will not change) and guesses. */
+  parts?: { text: string; stable: boolean }[] | null;
 }
 
 export interface TacticEvidence {
@@ -101,5 +105,7 @@ export interface VoiceUpdate {
 export interface EmployeeWarning {
   sessionId: string;
   kind: string;
+  /** Milliseconds between the end of the caller's sentence and the warning starting to play. */
+  delayMs?: number | null;
   at: string;
 }

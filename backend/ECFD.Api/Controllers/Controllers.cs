@@ -31,6 +31,31 @@ public class HealthController : ControllerBase
     }
 }
 
+/// <summary>History of finished calls and the feedback people gave on them.</summary>
+[ApiController]
+[Route("api/calls")]
+public class CallsController : ControllerBase
+{
+    private readonly CallLogStore _log;
+
+    public CallsController(CallLogStore log)
+    {
+        _log = log;
+    }
+
+    [HttpGet]
+    public IActionResult Recent([FromQuery] int take = 20) => Ok(_log.Recent(take));
+
+    /// <summary>Records whether ECFD judged the call correctly (a missed scam or a false alarm is "correct: false").</summary>
+    [HttpPost("{id:guid}/feedback")]
+    public IActionResult Feedback(Guid id, [FromBody] CallFeedbackRequest request)
+    {
+        _log.SaveFeedback(new CallFeedback(id, request.Correct, request.Note, DateTime.UtcNow));
+        return Ok(new { saved = true });
+    }
+}
+
+public record CallFeedbackRequest(bool Correct, string? Note = null);
 public record SimulateCallRequest(string Caller, string Callee);
 /// <summary>Speaker: "CALLER" (default) or "EMPLOYEE" - in a real call this comes from the phone leg.</summary>
 public record SimulateUtteranceRequest(string Text, string? Speaker = null);

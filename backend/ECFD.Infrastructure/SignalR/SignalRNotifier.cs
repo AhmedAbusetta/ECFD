@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using ECFD.Application.Interfaces;
@@ -25,6 +27,7 @@ public class SignalRNotifier : ISignalRNotifier
             externalCallId = session.ExternalCallId,
             caller = session.CallerEndpoint,
             callee = session.CalleeEndpoint,
+            callerLine = session.CallerLine,
             startedAt = session.StartedAt
         });
     }
@@ -40,13 +43,19 @@ public class SignalRNotifier : ISignalRNotifier
             confidence = segment.Confidence,
             isFinal = segment.IsFinal,
             startMs = segment.StartMs,
-            endMs = segment.EndMs
+            endMs = segment.EndMs,
+            sequenceNo = segment.SequenceNo
         });
     }
 
-    public async Task NotifyTranscriptPartialAsync(Guid sessionId, string utteranceId, string speaker, string text)
+    public async Task NotifyTranscriptPartialAsync(Guid sessionId, string utteranceId, string speaker, string text,
+        IReadOnlyList<ECFD.Application.Audio.LiveTextPart>? parts = null)
     {
-        await _hubContext.Clients.All.SendAsync("transcript.partial", new { sessionId, utteranceId, speaker, text });
+        await _hubContext.Clients.All.SendAsync("transcript.partial", new
+        {
+            sessionId, utteranceId, speaker, text,
+            parts = parts?.Select(p => new { text = p.Text, stable = p.Stable })
+        });
     }
 
     public async Task NotifyTacticDetectedAsync(Guid sessionId, Evidence evidence)
@@ -138,9 +147,9 @@ public class SignalRNotifier : ISignalRNotifier
         });
     }
 
-    public async Task NotifyEmployeeWarnedAsync(Guid sessionId, string kind)
+    public async Task NotifyEmployeeWarnedAsync(Guid sessionId, string kind, int? delayMs = null)
     {
-        await _hubContext.Clients.All.SendAsync("employee.warned", new { sessionId, kind, at = DateTime.UtcNow });
+        await _hubContext.Clients.All.SendAsync("employee.warned", new { sessionId, kind, delayMs, at = DateTime.UtcNow });
     }
 
     public async Task NotifyCallEndedAsync(Guid sessionId)
