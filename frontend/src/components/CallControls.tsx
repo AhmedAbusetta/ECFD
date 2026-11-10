@@ -146,18 +146,18 @@ export const CallControls: React.FC<{ callActive: boolean }> = ({ callActive }) 
   return (
     <div className="flex flex-wrap items-center gap-3">
       {!inCall ? (
-        <button className={`${btn} bg-accent text-white hover:opacity-90`} onClick={startCall}>
+        <button className={`${btn} bg-ink text-page hover:opacity-90`} onClick={startCall}>
           Start a test call
         </button>
       ) : (
         <>
           {status === "recording" ? (
-            <button className={`${btn} bg-danger text-white hover:opacity-90`} onClick={stopRecording}>
+            <button className={`${btn} bg-danger text-page hover:opacity-90`} onClick={stopRecording}>
               Stop recording
             </button>
           ) : (
             <button
-              className={`${btn} bg-accent text-white hover:opacity-90`}
+              className={`${btn} bg-ink text-page hover:opacity-90`}
               onClick={startRecording}
               disabled={status === "processing"}
             >
@@ -168,7 +168,7 @@ export const CallControls: React.FC<{ callActive: boolean }> = ({ callActive }) 
             {(["CALLER", "EMPLOYEE"] as Speaker[]).map((s) => (
               <button
                 key={s}
-                className={`px-3 py-2 ${speaker === s ? "bg-accent text-white" : "bg-surface text-muted hover:text-ink"}`}
+                className={`px-3 py-2 ${speaker === s ? "bg-ink text-page" : "bg-surface text-muted hover:text-ink"}`}
                 onClick={() => setSpeaker(s)}
                 disabled={status === "recording"}
               >

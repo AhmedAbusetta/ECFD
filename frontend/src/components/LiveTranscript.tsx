@@ -32,7 +32,7 @@ export const LiveTranscript: React.FC<LiveTranscriptProps> = ({ segments, partia
       <div ref={listRef} onScroll={onScroll} className="h-[480px] overflow-y-auto pr-2">
         {empty && <p className="pt-2 text-sm text-faint">The conversation appears here as people speak.</p>}
 
-        <div className="divide-y divide-line">
+        <div className="flex flex-col gap-3">
           {segments.map((s, i) => (
             <Line key={i} speaker={s.speaker}>
               {s.text}
@@ -56,13 +56,23 @@ export const LiveTranscript: React.FC<LiveTranscriptProps> = ({ segments, partia
   );
 };
 
-/** One turn: who spoke, then what they said. Arabic reads right to left, so the name sits on the right. */
-const Line: React.FC<{ speaker?: string; live?: boolean; children: React.ReactNode }> = ({ speaker, live, children }) => (
-  <div dir="rtl" className="grid grid-cols-[84px_1fr] gap-4 py-3 first:pt-1">
-    <div dir="ltr" className="pt-1 text-right text-xs text-muted">
-      {who(speaker)}
-      {live && <span className="block text-faint">speaking</span>}
+/** One turn as a chat bubble: the caller on the left in grey, the employee on the right in blue. */
+const Line: React.FC<{ speaker?: string; live?: boolean; children: React.ReactNode }> = ({ speaker, live, children }) => {
+  const employee = speaker === "EMPLOYEE";
+  return (
+    <div className={`flex max-w-[88%] flex-col ${employee ? "items-end self-end" : "items-start self-start"}`}>
+      <span className="mb-1 px-1 text-xs text-muted">
+        {who(speaker)}
+        {live ? " · speaking" : ""}
+      </span>
+      <div
+        dir="rtl"
+        className={`rounded-2xl px-4 py-2.5 ${employee ? "rounded-br-md" : "rounded-bl-md"} ${
+          live ? "border border-dashed border-line" : employee ? "bg-[#1b2b45]" : "bg-[#222226]"
+        }`}
+      >
+        <p className="text-[17px] leading-relaxed">{children}</p>
+      </div>
     </div>
-    <p className="text-[17px] leading-relaxed">{children}</p>
-  </div>
-);
+  );
+};
