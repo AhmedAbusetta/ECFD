@@ -67,7 +67,7 @@ L065,بالانس,الرصيد|البالانس,balance,English loanword / tech 
 L066,ليميت,الحد|الليميت,limit,English loanword / tech term,LIMIT,SCORE,Caller,هنرفعلك الليميت,Claude draft,Claude,
 L067,واتس,واتساب|الواتس|الوتس,WhatsApp,English loanword / tech term,WHATSAPP,SCORE,Caller,ابعتلي على الواتس,Claude draft,Claude,moving to WhatsApp
 L068,تليجرام,التليجرام|تلجرام,Telegram,English loanword / tech term,WHATSAPP,SCORE,Caller,كلمني على تليجرام,Claude draft,Claude,
-L069,إني ديسك,انى ديسك|اني دسك|انيديسك|AnyDesk,AnyDesk,English loanword / tech term,REMOTE_APP,HARD,Caller,نزّل إني ديسك وقولّي الرقم اللي ظاهر,Claude draft,Claude,
+L069,إني ديسك,انى ديسك|اني دسك|انيديسك|اي ديسك|اي دسك|AnyDesk|any desk,AnyDesk,English loanword / tech term,REMOTE_APP,HARD,Caller,نزّل إني ديسك وقولّي الرقم اللي ظاهر,Claude draft,Claude,
 L070,تيم فيوير,تيم فيور|تيمفيوير|TeamViewer,TeamViewer,English loanword / tech term,REMOTE_APP,HARD,Caller,افتح تيم فيوير,Claude draft,Claude,
 L071,زووم,زوم|Zoom,Zoom,English loanword / tech term,REMOTE_APP,SCORE,Caller,ادخل على زووم وشير الشاشة,Claude draft,Claude,
 L072,تديني,اديني|ادّيني|تدّيني|ممكن تديني,give me,Request verb,REQUEST,HARD,Caller,ممكن تديني الcvv,Claude draft,Claude,HARD only together with a secret object
@@ -86,7 +86,7 @@ L084,ادخل,ادخل على|خش على|اخش,go into / enter,Request verb,CL
 L085,أكّد,أكدلي|اكد|تأكيد,confirm,Request verb,APPROVE,SCORE,Caller,أكّدلي بياناتك الأول,Claude draft,Claude,
 L086,ماتقفلش,ماتقفلش السكة|ماتقفلش الخط|خليك معايا,don't hang up,Pressure & secrecy,KEEP_ON_LINE,SCORE,Caller,ماتقفلش السكة لحد ما نخلّص,Claude draft,Claude,
 L087,الكود,كود|الكود اللي جالك|كوده|كود التفعيل,the code (OTP),Secret object,OTP,HARD,Caller,الكود اللي جالك دلوقتي,Claude draft,Claude,
-L088,OTP,او تي بي|اوتيبي|أو تي بي,one-time password,Secret object,OTP,HARD,Caller,جالك OTP من ست أرقام,Claude draft,Claude,
+L088,OTP,او تي بي|اوتيبي|أو تي بي|اوتي بي|او تيبي|او تي پي|اوتوبيت|o t p,one-time password,Secret object,OTP,HARD,Caller,جالك OTP من ست أرقام,Claude draft,Claude,
 L089,الرسالة اللي جاتلك,الرسالة اللي جاتلك|المسدج اللي جالك|الرسالة اللي وصلتك,the SMS you got,Secret object,OTP,HARD,Caller,قولّي الرسالة اللي جاتلك فيها إيه,Claude draft,Claude,
 L090,رمز التحقق,رمز|كود التحقق|ارقام التحقق|كود التأكيد,verification code,Secret object,OTP,HARD,Caller,هيوصلك رمز التحقق,Claude draft,Claude,
 L091,الباسورد,باسورد|باسوورد|بسورد|البسورد|password,password,Secret object,PASSWORD,HARD,Caller,محتاج الباسورد القديم بتاعك,Claude draft,Claude,

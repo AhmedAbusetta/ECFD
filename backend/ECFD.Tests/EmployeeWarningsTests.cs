@@ -14,6 +14,7 @@ public class EmployeeWarningsTests
     [InlineData("PAYMENT/PAYMENT: حول + انستاباي", EmployeeWarnings.Payment)]
     [InlineData("BYPASS/SAFE_ACCOUNT: حساب امان", EmployeeWarnings.Payment)]
     [InlineData("REMOTE/REMOTE_APP: انى ديسك", EmployeeWarnings.Remote)]
+    [InlineData("IMPERSONATION/EXTERNAL_LINE: claims to be internal + external line", EmployeeWarnings.General)]
     public void Hard_Signal_Names_The_Exact_Request(string signal, string expected)
     {
         Assert.Equal(expected, EmployeeWarnings.Pick(new[] { signal }, null));
@@ -32,8 +33,8 @@ public class EmployeeWarningsTests
     [InlineData(new[] { EvidenceType.Authority, EvidenceType.OtpRequest }, EmployeeWarnings.Otp)]
     [InlineData(new[] { EvidenceType.Urgency, EvidenceType.CredentialRequest }, EmployeeWarnings.Secret)]
     [InlineData(new[] { EvidenceType.VerificationBypass }, EmployeeWarnings.Payment)]
-    [InlineData(new[] { EvidenceType.Authority, EvidenceType.Urgency }, EmployeeWarnings.Impersonation)]
-    [InlineData(new[] { EvidenceType.Secrecy }, EmployeeWarnings.Pressure)]
+    [InlineData(new[] { EvidenceType.Authority, EvidenceType.Urgency }, EmployeeWarnings.General)]
+    [InlineData(new[] { EvidenceType.Secrecy }, EmployeeWarnings.General)]
     [InlineData(new EvidenceType[0], EmployeeWarnings.General)]
     public void Without_Hard_Signals_The_Strongest_Rules_Evidence_Decides(EvidenceType[] evidence, string expected)
     {

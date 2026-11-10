@@ -47,6 +47,17 @@ public class AsteriskOptions
 
     public string[] Employees => EmployeeExtensions.Length > 0 ? EmployeeExtensions : new[] { "1001" };
 
+    /// <summary>
+    /// Extensions inside the organisation (colleagues, IT, managers). A caller on any other line is EXTERNAL,
+    /// which matters when they say "I'm from IT". Empty = only the employee extensions are internal, so in the
+    /// lab the second softphone (1002) plays the outside caller. List approved outside providers here too.
+    /// </summary>
+    public string[] InternalExtensions { get; set; } = Array.Empty<string>();
+
+    public bool IsInternal(string extension) =>
+        Array.IndexOf(InternalExtensions.Length > 0 ? InternalExtensions : Employees, extension) >= 0
+        || Array.IndexOf(Employees, extension) >= 0;
+
     public Uri EventsUri()
     {
         var b = new UriBuilder(AriUrl.TrimEnd('/') + "/events")

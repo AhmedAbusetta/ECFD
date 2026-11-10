@@ -69,8 +69,8 @@ services:
   # --- NLP Microservice ---
   nlp:
     build:
-      context: ../ml/nlp
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: ml/nlp/Dockerfile
     container_name: ecfd-nlp
     restart: unless-stopped
     ports:

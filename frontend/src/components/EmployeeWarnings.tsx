@@ -25,7 +25,8 @@ export const EmployeeWarnings: React.FC<{ warnings: EmployeeWarning[] }> = ({ wa
           <li key={i} className="flex justify-between items-center gap-4">
             <span dir="rtl" className="text-base text-amber-50">🔊 {SPOKEN[w.kind] ?? w.kind}</span>
             <span className="text-[11px] font-mono text-amber-400/70">
-              {w.kind} · {new Date(w.at).toLocaleTimeString()}
+              {w.delayMs != null && `${(w.delayMs / 1000).toFixed(1)} s after the caller's sentence · `}
+              {new Date(w.at).toLocaleTimeString()}
             </span>
           </li>
         ))}

@@ -40,6 +40,13 @@ builder.Services.AddSingleton<ISignalRNotifier, SignalRNotifier>();
 
 // Register ML Clients: in-process mocks by default, real FastAPI services when MlServices:UseMocks=false
 var mlOptions = builder.Configuration.GetSection(MlServicesOptions.SectionName).Get<MlServicesOptions>() ?? new MlServicesOptions();
+// "localhost" is tried over IPv6 first; the Python services listen on IPv4 only, so on Windows every new
+// connection lost about two seconds before falling back - on each rule check, analyst call and warning.
+mlOptions.AsrUrl = Loopback(mlOptions.AsrUrl)!;
+mlOptions.NlpUrl = Loopback(mlOptions.NlpUrl)!;
+mlOptions.AsrFallbackUrl = Loopback(mlOptions.AsrFallbackUrl);
+mlOptions.AnalystUrl = Loopback(mlOptions.AnalystUrl);
+mlOptions.AntiSpoofUrl = Loopback(mlOptions.AntiSpoofUrl);
 if (mlOptions.UseMocks)
 {
     builder.Services.AddSingleton<IAsrClient, MockAsrClient>();
@@ -110,10 +117,12 @@ else
 }
 
 // The call pipeline shared by real PBX calls and the dashboard's simulated calls
+builder.Services.AddSingleton<CallLogStore>(); // history of finished calls (verdicts, not audio)
 builder.Services.AddSingleton<CallPipeline>();
 
 // Telephony (ADR-0001): watch the PBX over ARI and tap answered calls; off unless Asterisk:Enabled=true
 var asteriskOptions = builder.Configuration.GetSection(AsteriskOptions.SectionName).Get<AsteriskOptions>() ?? new AsteriskOptions();
+asteriskOptions.AriUrl = Loopback(asteriskOptions.AriUrl)!;
 if (asteriskOptions.Enabled && string.IsNullOrWhiteSpace(asteriskOptions.MediaHost))
 {
     Console.Error.WriteLine("Asterisk:Enabled is true but Asterisk:MediaHost is empty - set it to this machine's IP " +
@@ -167,6 +176,12 @@ app.MapControllers();
 app.MapHub<DashboardHub>("/hubs/dashboard");
 
 app.Run();
+
+// http://localhost:8002 -> http://127.0.0.1:8002 (other hosts are left alone)
+static string? Loopback(string? url) =>
+    Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Host.Equals("localhost", StringComparison.OrdinalIgnoreCase)
+        ? new UriBuilder(uri) { Host = "127.0.0.1" }.Uri.ToString().TrimEnd('/')
+        : url;
 
 // Exposed for WebApplicationFactory-based integration tests.
 public partial class Program;

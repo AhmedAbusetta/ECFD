@@ -16,8 +16,11 @@ public record SegmenterOptions
     public int StartFrames { get; init; } = 3;
     /// <summary>Audio kept from before speech started, so the first syllable isn't clipped.</summary>
     public int PreRollMs { get; init; } = 600;
-    /// <summary>Silence that ends a sentence.</summary>
-    public int SilenceToCloseMs { get; init; } = 1000;
+    /// <summary>
+    /// Silence that ends a sentence. Every millisecond here delays the transcript and the warning, so it is as
+    /// short as a natural pause between sentences allows; a pause inside a sentence just gives two shorter turns.
+    /// </summary>
+    public int SilenceToCloseMs { get; init; } = 800;
     /// <summary>Quiet audio kept after the last loud frame: soft word endings ("يخلص") live here.</summary>
     public int TrailingKeepMs { get; init; } = 400;
     /// <summary>Continuous speech is cut here so a long monologue still gets analysed.</summary>
@@ -29,6 +32,8 @@ public record SegmenterOptions
     public int MinSpeechMs { get; init; } = 150;
     /// <summary>How often the sentence-so-far is offered for live (partial) transcription.</summary>
     public int PartialEveryMs { get; init; } = 1000;
+    /// <summary>No live words until the sentence is this long: a guess from one second of audio changes almost every time.</summary>
+    public int FirstPartialAfterMs { get; init; } = 1800;
 }
 
 /// <summary>
@@ -139,7 +144,7 @@ public sealed class UtteranceSegmenter
         {
             Close();
         }
-        else if (_onPartial != null && _sinceLastPartialMs >= _o.PartialEveryMs)
+        else if (_onPartial != null && _sinceLastPartialMs >= _o.PartialEveryMs && DurationMs(_utterance.Count) >= _o.FirstPartialAfterMs)
         {
             _sinceLastPartialMs = 0;
             _onPartial(_utterance.ToArray());

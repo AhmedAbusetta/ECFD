@@ -18,6 +18,13 @@ public class CallSession
     /// <summary>Latest risk from the AI call analyst (LLM + deterministic floor); CurrentRisk = max(rules, analyst).</summary>
     public int AnalystRisk { get; set; } = 0;
     public AttackStage CurrentStage { get; set; } = AttackStage.Normal;
+    /// <summary>EXTERNAL or INTERNAL: where the phone system says the caller's line is. Null = unknown (simulated call).</summary>
+    public string? CallerLine { get; set; }
+    public int PeakRisk { get; set; }
+    /// <summary>Risk the call can no longer fall below: set when the instant rules hear a forbidden request.</summary>
+    public int RequestFloor { get; set; }
+    /// <summary>Spoken warnings played to the employee on this call.</summary>
+    public List<EmployeeWarningRecord> Warnings { get; set; } = new();
 
     public List<CallParticipant> Participants { get; set; } = new();
     public List<TranscriptSegment> TranscriptSegments { get; set; } = new();
@@ -26,6 +33,9 @@ public class CallSession
     public List<RiskSnapshot> RiskSnapshots { get; set; } = new();
     public List<Alert> Alerts { get; set; } = new();
 }
+
+/// <summary>One spoken warning: which one, and how long after the caller's sentence ended it started playing.</summary>
+public record EmployeeWarningRecord(string Kind, int? DelayMs, DateTime At);
 
 public class CallParticipant
 {
@@ -50,6 +60,8 @@ public class TranscriptSegment
     public bool IsFinal { get; set; }
     public string ModelVersion { get; set; } = "asr-v1";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>When the speaker stopped talking (PBX calls); used to time how fast a warning follows.</summary>
+    public DateTime? SpeechEndedAt { get; set; }
 }
 
 public class Evidence

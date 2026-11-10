@@ -13,9 +13,22 @@ namespace ECFD.Application.Risk;
 public static class RiskFusion
 {
     public const string AnalystContributor = "AI_CALL_ANALYST";
+    public const string ForbiddenRequestContributor = "FORBIDDEN_REQUEST";
+    /// <summary>
+    /// Once the caller has asked for something no legitimate caller asks for by phone, the call's risk never
+    /// falls below this again (the same floor the analyst service applies, ml/brain/ecfd_brain/floor.py).
+    /// </summary>
+    public const int ForbiddenRequestFloor = 80;
 
-    public static RiskResult Fuse(RiskResult rules, int analystRisk, AttackStage stage)
+    /// <param name="requestFloor">0, or <see cref="ForbiddenRequestFloor"/> once the instant rules heard a forbidden request.</param>
+    public static RiskResult Fuse(RiskResult rules, int analystRisk, AttackStage stage, int requestFloor = 0)
     {
+        if (requestFloor > rules.Score && requestFloor >= analystRisk)
+        {
+            var withFloor = new List<RiskContributor> { new(ForbiddenRequestContributor, requestFloor) };
+            withFloor.AddRange(rules.TopContributors);
+            return new RiskResult(requestFloor, RiskEngine.SeverityFor(requestFloor), withFloor, stage);
+        }
         if (analystRisk <= rules.Score)
         {
             return rules with { Stage = stage };

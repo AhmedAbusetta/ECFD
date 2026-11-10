@@ -136,3 +136,6 @@ ml/antispoof/testset/manifest.json
 ml/antispoof/testset/_tmp/
 ml/antispoof/testset/results/
 ml/antispoof/testset/_clone/
+
+# --- Finished-call history written by the backend (may contain transcripts) ---
+call-logs/

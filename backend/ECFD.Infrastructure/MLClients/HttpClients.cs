@@ -45,7 +45,7 @@ public class MlServicesOptions
 // Wire contracts from docs/03_ECFD_Technical_Architecture.md (camelCase JSON).
 internal record AsrRequestDto(string SessionId, string SegmentId, int SampleRate, string AudioFormat, string LanguageHint, string AudioBase64);
 internal record AsrResponseDto(string SegmentId, string Text, float Confidence, bool IsFinal, long StartMs, long EndMs, string ModelVersion, double InferenceDurationMs);
-internal record AnalystTurnRequestDto(string SessionId, string Speaker, string Text);
+internal record AnalystTurnRequestDto(string SessionId, string Speaker, string Text, string? CallerLine);
 internal record AnalystEndRequestDto(string SessionId);
 internal record NlpRequestDto(string SessionId, string SegmentId, string Text, string Language);
 internal record NlpTacticDto(string Type, float Confidence);
@@ -160,10 +160,11 @@ public class HttpAnalystClient : IAnalystClient
         _http = http;
     }
 
-    public async Task<AnalystResult?> AnalyzeTurnAsync(Guid sessionId, string speaker, string text, CancellationToken cancellationToken = default)
+    public async Task<AnalystResult?> AnalyzeTurnAsync(Guid sessionId, string speaker, string text, string? callerLine = null,
+        CancellationToken cancellationToken = default)
     {
         using var response = await _http.PostAsJsonAsync("/v1/analyst/turn",
-            new AnalystTurnRequestDto(sessionId.ToString(), speaker, text), cancellationToken);
+            new AnalystTurnRequestDto(sessionId.ToString(), speaker, text, callerLine), cancellationToken);
         await HttpAsrClient.EnsureSuccess(response, "Analyst", cancellationToken);
         return await response.Content.ReadFromJsonAsync<AnalystResult>(cancellationToken)
                ?? throw new MlServiceException("Analyst returned an empty response");
@@ -179,7 +180,8 @@ public class HttpAnalystClient : IAnalystClient
 /// <summary>Used when no AnalystUrl is configured (or with mocks): the rules alone score the call.</summary>
 public class DisabledAnalystClient : IAnalystClient
 {
-    public Task<AnalystResult?> AnalyzeTurnAsync(Guid sessionId, string speaker, string text, CancellationToken cancellationToken = default)
+    public Task<AnalystResult?> AnalyzeTurnAsync(Guid sessionId, string speaker, string text, string? callerLine = null,
+        CancellationToken cancellationToken = default)
         => Task.FromResult<AnalystResult?>(null);
 
     public Task EndCallAsync(Guid sessionId, CancellationToken cancellationToken = default) => Task.CompletedTask;

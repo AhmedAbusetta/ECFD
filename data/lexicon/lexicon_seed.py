@@ -97,7 +97,7 @@ ROWS = [
     ("ليميت", "الحد|الليميت", "limit", N_LOAN, "LIMIT", "SCORE", "Caller", "هنرفعلك الليميت", ""),
     ("واتس", "واتساب|الواتس|الوتس", "WhatsApp", N_LOAN, "WHATSAPP", "SCORE", "Caller", "ابعتلي على الواتس", "moving to WhatsApp"),
     ("تليجرام", "التليجرام|تلجرام", "Telegram", N_LOAN, "WHATSAPP", "SCORE", "Caller", "كلمني على تليجرام", ""),
-    ("إني ديسك", "انى ديسك|اني دسك|انيديسك|AnyDesk", "AnyDesk", N_LOAN, "REMOTE_APP", "HARD", "Caller", "نزّل إني ديسك وقولّي الرقم اللي ظاهر", ""),
+    ("إني ديسك", "انى ديسك|اني دسك|انيديسك|اي ديسك|اي دسك|AnyDesk|any desk", "AnyDesk", N_LOAN, "REMOTE_APP", "HARD", "Caller", "نزّل إني ديسك وقولّي الرقم اللي ظاهر", ""),
     ("تيم فيوير", "تيم فيور|تيمفيوير|TeamViewer", "TeamViewer", N_LOAN, "REMOTE_APP", "HARD", "Caller", "افتح تيم فيوير", ""),
     ("زووم", "زوم|Zoom", "Zoom", N_LOAN, "REMOTE_APP", "SCORE", "Caller", "ادخل على زووم وشير الشاشة", ""),
     # ---------------------------------------------------------------- Egyptian request verbs
@@ -118,7 +118,7 @@ ROWS = [
     ("ماتقفلش", "ماتقفلش السكة|ماتقفلش الخط|خليك معايا", "don't hang up", PRESSURE, "KEEP_ON_LINE", "SCORE", "Caller", "ماتقفلش السكة لحد ما نخلّص", ""),
     # ---------------------------------------------------------------- secret objects
     ("الكود", "كود|الكود اللي جالك|كوده|كود التفعيل", "the code (OTP)", SECRET, "OTP", "HARD", "Caller", "الكود اللي جالك دلوقتي", ""),
-    ("OTP", "او تي بي|اوتيبي|أو تي بي", "one-time password", SECRET, "OTP", "HARD", "Caller", "جالك OTP من ست أرقام", ""),
+    ("OTP", "او تي بي|اوتيبي|أو تي بي|اوتي بي|او تيبي|او تي پي|اوتوبيت|o t p", "one-time password", SECRET, "OTP", "HARD", "Caller", "جالك OTP من ست أرقام", ""),
     ("الرسالة اللي جاتلك", "الرسالة اللي جاتلك|المسدج اللي جالك|الرسالة اللي وصلتك", "the SMS you got", SECRET, "OTP", "HARD", "Caller", "قولّي الرسالة اللي جاتلك فيها إيه", ""),
     ("رمز التحقق", "رمز|كود التحقق|ارقام التحقق|كود التأكيد", "verification code", SECRET, "OTP", "HARD", "Caller", "هيوصلك رمز التحقق", ""),
     ("الباسورد", "باسورد|باسوورد|بسورد|البسورد|password", "password", SECRET, "PASSWORD", "HARD", "Caller", "محتاج الباسورد القديم بتاعك", ""),

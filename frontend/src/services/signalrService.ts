@@ -36,6 +36,12 @@ export class SignalRService {
     if (onVoiceUpdated) this.connection.on("voice.updated", onVoiceUpdated);
     if (onEmployeeWarned) this.connection.on("employee.warned", onEmployeeWarned);
 
+    // automatic reconnect gives up after about 40 s; a backend restart can take longer, so start over
+    const connection = this.connection;
+    connection.onclose(() => {
+      if (!this.stopped && connection === this.connection) this.connectWithRetry(connection);
+    });
+
     this.stopped = false;
     this.connectWithRetry(this.connection);
   }

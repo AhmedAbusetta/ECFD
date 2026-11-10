@@ -30,7 +30,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 from ecfd_brain.analyst import PROMPT_VERSION, CallAnalyst, Turn  # noqa: E402
-from ecfd_brain.floor import HardSignalFloor  # noqa: E402
+from ecfd_brain.floor import HardSignal, HardSignalFloor  # noqa: E402
 from ecfd_brain.trajectory import RiskTrajectory  # noqa: E402
 from run_test0 import load_env  # noqa: E402
 
@@ -56,6 +56,8 @@ class CallState:
     trajectory: RiskTrajectory = field(default_factory=RiskTrajectory)
     notes: str = ""
     previous_risk: Optional[int] = None
+    caller_line: Optional[str] = None    # EXTERNAL | INTERNAL, from the phone system (None = unknown)
+    line_mismatch_reported: bool = False
     last: dict = field(default_factory=dict)  # latest assessment fields, re-sent with floor-only answers
     lock: threading.Lock = field(default_factory=threading.Lock)       # protects turns
     analysis: threading.Lock = field(default_factory=threading.Lock)   # one LLM call at a time per call
@@ -69,6 +71,7 @@ class TurnRequest(BaseModel):
     sessionId: str
     speaker: str
     text: str
+    callerLine: Optional[str] = None  # EXTERNAL | INTERNAL when the call came through the PBX
 
 
 class EndRequest(BaseModel):
@@ -94,6 +97,7 @@ class TurnResponse(BaseModel):
     stage: str = "Normal"
     trend: str = "STEADY"
     employeeState: str = "NORMAL"
+    ruleFlagValid: bool = True     # false = the analyst judged the instant rule's flag not a real request
     callerGoal: str = ""
     strategy: str = ""
     nextLikelyMove: str = ""
@@ -126,6 +130,8 @@ def analyze_turn(req: TurnRequest):
     with state.lock:
         state.turns.append(Turn(speaker, req.text))
         turn_no = len(state.turns)
+        if req.callerLine and req.callerLine.upper() in ("EXTERNAL", "INTERNAL"):
+            state.caller_line = req.callerLine.upper()
     signals = floor.check(req.text, speaker)
 
     with state.analysis:
@@ -138,10 +144,19 @@ def analyze_turn(req: TurnRequest):
             error = "newer turn pending - the LLM will judge the call at that turn"
         else:
             try:
-                assessment = analyst.assess(snapshot, state.notes, state.previous_risk)
+                flags = [f"{s.kind}/{s.concept}: {' + '.join(s.words)}" for s in signals]
+                assessment = analyst.assess(snapshot, state.notes, state.previous_risk, state.caller_line, flags)
                 state.notes, state.previous_risk = assessment.notes, assessment.risk
             except Exception as e:
                 error = f"LLM failed: {e}"[:300]
+        flag_valid = True
+        if assessment is not None and signals and not assessment.rule_flag_valid:
+            flag_valid, signals = False, []  # negated, quoted or advice: the floor must not hold the risk up
+        # a fact, not a guess: "I'm from IT" on a line the phone system says came from outside
+        if (assessment is not None and assessment.claims_internal and state.caller_line == "EXTERNAL"
+                and not state.line_mismatch_reported):
+            state.line_mismatch_reported = True
+            signals = [*signals, HardSignal("IMPERSONATION", "EXTERNAL_LINE", ("claims to be internal", "external line"))]
         out = state.trajectory.update(turn_no, assessment, signals)
 
         if assessment is not None:
@@ -155,7 +170,7 @@ def analyze_turn(req: TurnRequest):
         return TurnResponse(
             sessionId=req.sessionId, turn=turn_no, analyzed=assessment is not None,
             risk=out["risk"], level=out["level"], levelChanged=out["level_changed"],
-            llmRisk=out["llm_risk"], floor=out["floor"],
+            llmRisk=out["llm_risk"], floor=out["floor"], ruleFlagValid=flag_valid,
             hardSignals=[f"{s.kind}/{s.concept}: {' + '.join(s.words)}" for s in signals],
             reasons=out["reasons"], model=analyst.model if analyst else "",
             latencyMs=assessment.latency_ms if assessment else 0, error=error,
