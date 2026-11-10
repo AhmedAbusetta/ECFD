@@ -43,6 +43,8 @@ public class CallPipeline
     private readonly ConcurrentDictionary<string, byte> _finalizedUtterances = new();
     // Anti-spoofing scores of each call's caller sentences, combined into one call-level score.
     private readonly ConcurrentDictionary<Guid, VoiceSpoofTracker> _voice = new();
+    // Sentences queued or being transcribed, per call, with when their speaker stopped talking.
+    private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<string, DateTime>> _pending = new();
     // Per sentence being spoken: which live words are confirmed, so they stop changing on screen.
     private readonly ConcurrentDictionary<string, LiveTextStabilizer> _liveText = new();
 
@@ -138,6 +140,7 @@ public class CallPipeline
             session.EndedAt = DateTime.UtcNow;
         }
         var voiceScore = _voice.TryRemove(sessionId, out var tracker) ? tracker.CallScore : null;
+        _pending.TryRemove(sessionId, out _);
         if (_active.IsEmpty)
         {
             _finalizedUtterances.Clear(); // only needed while a call's late live results can still arrive
@@ -225,6 +228,32 @@ public class CallPipeline
             await _notifier.NotifyTacticDetectedAsync(session.Id, added);
         }
         await _notifier.NotifyRiskUpdatedAsync(session.Id, fused);
+    }
+
+    public void QueueUtterance(Guid sessionId, string utteranceId, DateTime speechEndedAtUtc) =>
+        _pending.GetOrAdd(sessionId, _ => new ConcurrentDictionary<string, DateTime>())[utteranceId] = speechEndedAtUtc;
+
+    public void CompleteUtterance(Guid sessionId, string utteranceId)
+    {
+        if (_pending.TryGetValue(sessionId, out var pending))
+        {
+            pending.TryRemove(utteranceId, out _);
+        }
+    }
+
+    /// <summary>
+    /// Each side of the call is transcribed on its own, so a short reply can be ready before the longer sentence
+    /// spoken just before it. Holds a finished sentence back (at most <paramref name="timeout"/>) until every sentence
+    /// that ended earlier has been added to the transcript, so the transcript and the analyst see them in order.
+    /// </summary>
+    public async Task WaitForEarlierUtterancesAsync(Guid sessionId, string utteranceId, DateTime speechEndedAtUtc, TimeSpan timeout)
+    {
+        var until = DateTime.UtcNow + timeout;
+        while (DateTime.UtcNow < until && _pending.TryGetValue(sessionId, out var pending)
+               && pending.Any(p => p.Key != utteranceId && p.Value < speechEndedAtUtc))
+        {
+            await Task.Delay(40);
+        }
     }
 
     public void MarkFinalized(string? utteranceId)

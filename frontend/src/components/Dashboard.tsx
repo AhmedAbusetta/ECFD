@@ -3,7 +3,7 @@
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import { signalRService } from "@/services/signalrService";
-import { CallSession, TranscriptSegment, TranscriptPartial, TacticEvidence, RiskContributor, AlertEvent, AnalystUpdate, VoiceUpdate, EmployeeWarning } from "@/types";
+import { CallSession, TranscriptSegment, TranscriptPartial, TacticEvidence, RiskContributor, AnalystUpdate, VoiceUpdate, EmployeeWarning } from "@/types";
 import { RiskGauge } from "./RiskGauge";
 import { LiveTranscript } from "./LiveTranscript";
 import { VerdictBanner } from "./VerdictBanner";
@@ -28,7 +28,6 @@ export const Dashboard: React.FC = () => {
   const [severity, setSeverity] = useState<string>("Low");
   const [stage, setStage] = useState<string>("Normal");
   const [contributors, setContributors] = useState<RiskContributor[]>([]);
-  const [alerts, setAlerts] = useState<AlertEvent[]>([]);
   const [analyst, setAnalyst] = useState<AnalystUpdate | null>(null);
   // turns sent to the analyst that it has not answered yet (it answers in the background)
   const [analystPending, setAnalystPending] = useState<number>(0);
@@ -48,7 +47,6 @@ export const Dashboard: React.FC = () => {
         setSeverity("Low");
         setStage("Normal");
         setContributors([]);
-        setAlerts([]);
         setAnalyst(null);
         setAnalystPending(0);
         setVoice(null);
@@ -71,7 +69,7 @@ export const Dashboard: React.FC = () => {
         setSeverity(data.severity);
         setContributors(data.topContributors || []);
       },
-      (data) => setAlerts((prev) => [data, ...prev]),
+      () => undefined, // alerts are shown through the verdict banner
       () => {
         setSession(null);
         setAnalystPending(0);

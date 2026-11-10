@@ -30,7 +30,22 @@ public class PipelineCallSink : ICallSink
         return session.Id;
     }
 
+    public void OnUtteranceQueued(Guid sessionId, string utteranceId, DateTime speechEndedAtUtc) =>
+        _pipeline.QueueUtterance(sessionId, utteranceId, speechEndedAtUtc);
+
     public async Task OnUtteranceAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, DateTime speechEndedAtUtc, CancellationToken ct)
+    {
+        try
+        {
+            await TranscribeAndAnalyzeAsync(sessionId, speaker, utteranceId, pcm16le, speechEndedAtUtc, ct);
+        }
+        finally
+        {
+            _pipeline.CompleteUtterance(sessionId, utteranceId); // also when it was dropped or failed
+        }
+    }
+
+    private async Task TranscribeAndAnalyzeAsync(Guid sessionId, string speaker, string utteranceId, byte[] pcm16le, DateTime speechEndedAtUtc, CancellationToken ct)
     {
         var session = _pipeline.Get(sessionId);
         if (session == null)
@@ -65,6 +80,7 @@ public class PipelineCallSink : ICallSink
         _logger.LogInformation("{Speaker} sentence ({Audio:F1} s): waited {Waited} ms, speech-to-text {Asr} ms.",
             speaker, pcm16le.Length / 32000.0, (int)waited.TotalMilliseconds, (int)(DateTime.UtcNow - started).TotalMilliseconds);
 
+        await _pipeline.WaitForEarlierUtterancesAsync(sessionId, utteranceId, speechEndedAtUtc, TimeSpan.FromSeconds(4));
         await _pipeline.AnalyzeSegmentAsync(session, new TranscriptSegment
         {
             CallSessionId = session.Id,
